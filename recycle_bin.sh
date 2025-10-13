@@ -45,7 +45,7 @@ initialize_recyclebin() {
 #################################################
 generate_unique_id() {
 	local timestamp=$(date +%s)
-	local random=$(cat /dev/urandom | tr -dc 'a-z0-9' | fold -w 6 | head - n 1)
+	local random=$(cat /dev/urandom | tr -dc 'a-z0-9' | fold -w 6 | head -n 1)
 	echo "${timestamp}_${random}"
 }
 
@@ -71,11 +71,41 @@ delete_file() {
 	return 1
 	fi
 	
+	echo "File path: $file_path"
+	
 	# Your code here
 	# Hint: Get file metadata using stat command
+	echo "Fetching metadata..."
+	
+	local original_file_name=$(stat -c %n "$file_path")
+	local original_absolute_path=$(realpath "$file_path")
+	local deletion_timestamp=$(date +"%Y-%m-%d_%H-%M-%S")
+	local file_size=$(stat -c %s "$file_path")
+	local file_type=$(stat -c %F "$file_path")
+	local original_permissions=$(stat -c %a "$file_path")
+	local original_owner=$(stat -c %U:%G "$file_path")
+	
+	echo "Metadata successfully fetched!"
+	
 	# Hint: Generate unique ID
+	echo "Generating file id..."
+	
+	local file_unique_id=$(generate_unique_id)
+	
+	echo "File id successfully generated!"
 	# Hint: Move file to FILES_DIR with unique ID
+	echo "Moving to recycle bin..."
+	
+	mv "$file_path" "$FILES_DIR"
+	
+	echo "File moved!"
+	
 	# Hint: Add entry to metadata file
+	echo "Adding information to metadata file..."
+	
+	echo "$file_unique_id,$original_file_name,$file_path,$deletion_timestamp,$file_size,$file_type,$original_permissions,$original_owner" >> "$METADATA_FILE"
+	
+	echo "Information added successfully!"
 	
 	echo "Delete function called with: $file_path"
 	return 0
