@@ -95,8 +95,8 @@ delete_file() {
 	echo "File id successfully generated!"
 	# Hint: Move file to FILES_DIR with unique ID
 	echo "Moving to recycle bin..."
-	
-	mv "$file_path" "$FILES_DIR"
+
+	mv "$file_path" "$FILES_DIR/$file_unique_id"
 	
 	echo "File moved!"
 	
@@ -131,12 +131,12 @@ list_recycled() {
 #################################################
 # Function: restore_file
 # Description: Restores file from recycle bin
-# Parameters: $1 - unique ID of file to restore
+# Parameters: $1 - unique ID or name of file to restore 
 # Returns: 0 on success, 1 on failure
 #################################################
 restore_file() {
 	# TODO: Implement this function
-	local file_id="$1"
+	local recover_file="$1" 
 	
 	if [ -z "$file_id" ]; then
 		echo -e "${RED}Error: No file ID specified${NC}"
@@ -149,6 +149,20 @@ restore_file() {
 	# Hint: Check if original path exists
 	# Hint: Move file back and restore permissions
 	# Hint: Remove entry from metadata
+	while IFS=',' read -r file_id original_name original_path deletion_date file_size file_type permissions owner
+	   do 
+	      if [[ "$recover_file_id" == "$file_id" || "$recover_file" == "$original_name" ]] 
+	      then 
+	         echo "File match found!"
+	         if [[ -d "$original_path" ]]
+	         then 
+	            echo "Old directory found, moving file back..."
+	            mv "$FILES_DIR/$file_id" "$original_path/$original_name"
+	         else
+	            echo "Old directory does not exist anymore, creating parent directory..."
+	         
+	      
+	
 	
 	return 0
 }
