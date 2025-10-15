@@ -2,3 +2,4 @@ delete_file references:
  - stat command guide: https://www.geeksforgeeks.org/linux-unix/stat-command-in-linux-with-examples/
  - remove lines: https://stackoverflow.com/questions/5410757/how-to-delete-from-a-text-file-all-lines-that-contain-a-specific-string
  - separate arguments: https://stackoverflow.com/questions/4385772/bash-read-line-by-line-from-file-with-ifs
+ - disk free space: https://opensource.com/article/18/7/how-check-free-disk-space-linux

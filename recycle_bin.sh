@@ -11,6 +11,7 @@ RECYCLE_BIN_DIR="$HOME/.recycle_bin"
 FILES_DIR="$RECYCLE_BIN_DIR/files"
 METADATA_FILE="$RECYCLE_BIN_DIR/metadata.db"
 CONFIG_FILE="$RECYCLE_BIN_DIR/config"
+LOG_FILE="$RECYCLE_BIN_DIR/recyclebin.log"
 
 # Color codes for output (optional)
 RED='\033[0;31m'
@@ -56,58 +57,59 @@ generate_unique_id() {
 # Returns: 0 on success, 1 on failure
 #################################################
 delete_file() {
-	# TODO: Implement this function
 	local file_path="$1"
+	
+	echo "Delete function called with: $file_path" > "$LOG_FILE"
 	
 	# Validate input
 	if [ -z "$file_path" ]; then
-	echo -e "${RED}Error: No file specified${NC}"
+	echo -e "${RED}Error: No file specified${NC}" > "$LOG_FILE"
 	return 1
 	fi
 	
 	# Check if file exists
 	if [ ! -e "$file_path" ]; then
-	echo -e "${RED}Error: File '$file_path' does not exist${NC}"
+	echo -e "${RED}Error: File '$file_path' does not exist${NC}" > "$LOG_FILE"
 	return 1
 	fi
 	
-	echo "File path: $file_path"
-	
-	# Your code here
-	# Hint: Get file metadata using stat command
-	echo "Fetching metadata..."
+	echo "Fetching metadata..." > "$LOG_FILE"
 	
 	local original_file_name=$(stat -c %n "$file_path")
 	local original_absolute_path=$(realpath "$file_path")
+	
+	# Check if deletion directory is not recycle bin itself
+	if [[ "$original_absolute_path" -eq "$RECYCLE_BIN_DIR" ]]
+	then 
+	   echo -e "${RED}Error: Cannot delete recycle bin itself.${NC}" > "$LOG_FILE"
+	   return 1
+	fi 
+	
 	local deletion_timestamp=$(date +"%Y-%m-%d_%H-%M-%S")
 	local file_size=$(stat -c %s "$file_path")
 	local file_type=$(stat -c %F "$file_path")
 	local original_permissions=$(stat -c %a "$file_path")
 	local original_owner=$(stat -c %U:%G "$file_path")
 	
-	echo "Metadata successfully fetched!"
+	echo "Metadata successfully fetched!" > "$LOG_FILE"
 	
 	# Hint: Generate unique ID
-	echo "Generating file id..."
+	echo "Generating file id..." > "$LOG_FILE"
 	
 	local file_unique_id=$(generate_unique_id)
-	
-	echo "File id successfully generated!"
-	# Hint: Move file to FILES_DIR with unique ID
-	echo "Moving to recycle bin..."
+
+	echo "Moving to recycle bin..." > "$LOG_FILE"
 
 	mv "$file_path" "$FILES_DIR/$file_unique_id"
 	
-	echo "File moved!"
+	echo "File moved!" > "$LOG_FILE"
 	
-	# Hint: Add entry to metadata file
-	echo "Adding information to metadata file..."
+	echo "Adding information to metadata file..." > "$LOG_FILE"
 	
 	echo "$file_unique_id,$original_file_name,$file_path,$deletion_timestamp,$file_size,$file_type,$original_permissions,$original_owner" >> "$METADATA_FILE"
 	
-	echo "Information added successfully!"
+	echo "Information added successfully!" > "$LOG_FILE"
 	
-	echo "Delete function called with: $file_path"
 	return 0
 }
 
@@ -138,6 +140,8 @@ restore_file() {
 	# TODO: Implement this function
 	local recover_file="$1" 
 	
+	echo "Restore function called with: $file_path" > "$LOG_FILE"
+	
 	if [ -z "$file_id" ]; then
 		echo -e "${RED}Error: No file ID specified${NC}"
 		return 1
@@ -149,17 +153,22 @@ restore_file() {
 	# Hint: Check if original path exists
 	# Hint: Move file back and restore permissions
 	# Hint: Remove entry from metadata
+	echo "Searching file..." > "$LOG_FILE"
+	
 	while IFS=',' read -r file_id original_name original_path deletion_date file_size file_type permissions owner
 	   do 
 	      if [[ "$recover_file_id" == "$file_id" || "$recover_file" == "$original_name" ]] 
 	      then 
-	         echo "File match found!"
+	         echo "File match found!" > "$LOG_FILE"
 	         if [[ -d "$original_path" ]]
 	         then 
-	            echo "Old directory found, moving file back..."
+	            if 
+	            echo "Old directory found, moving file back..." > "$LOG_FILE"
 	            mv "$FILES_DIR/$file_id" "$original_path/$original_name"
-	         else
-	            echo "Old directory does not exist anymore, creating parent directory..."
+	            echo "File moved!" > "$LOG_FILE"
+	         elif [[ 
+	            echo "Old directory does not exist anymore, creating parent directory..." > "$LOG_FILE"
+	   done < "$METADATA_FILE"
 	         
 	      
 	
@@ -192,7 +201,7 @@ empty_recyclebin() {
 #################################################
 search_recycled() {
 	# TODO: Implement this function
-	local pattern="$1"
+	local pattern="$1"	
 	
 	# Your code here
 	# Hint: Use grep to search metadata
