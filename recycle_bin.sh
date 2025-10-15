@@ -59,56 +59,77 @@ generate_unique_id() {
 delete_file() {
 	local file_path="$1"
 	
-	echo "Delete function called with: $file_path" > "$LOG_FILE"
+	echo "Delete function called with: $file_path" >> "$LOG_FILE"
 	
 	# Validate input
 	if [ -z "$file_path" ]; then
-	echo -e "${RED}Error: No file specified${NC}" > "$LOG_FILE"
+	echo -e "${RED}Error: No file specified${NC}"
+	echo -e "${RED}Error: No file specified${NC}" >> "$LOG_FILE"
 	return 1
 	fi
 	
 	# Check if file exists
 	if [ ! -e "$file_path" ]; then
-	echo -e "${RED}Error: File '$file_path' does not exist${NC}" > "$LOG_FILE"
+	echo -e "${RED}Error: File '$file_path' does not exist${NC}"
+	echo -e "${RED}Error: File '$file_path' does not exist${NC}" >> "$LOG_FILE"
 	return 1
 	fi
+		
+	echo "Fetching metadata..." >> "$LOG_FILE"
 	
-	echo "Fetching metadata..." > "$LOG_FILE"
-	
-	local original_file_name=$(stat -c %n "$file_path")
-	local original_absolute_path=$(realpath "$file_path")
+	local original_file_name=$(basename "$file_path")
+        local original_absolute_path=$(dirname "$(realpath "$file_path")")
 	
 	# Check if deletion directory is not recycle bin itself
-	if [[ "$original_absolute_path" -eq "$RECYCLE_BIN_DIR" ]]
+	if [[ "$original_absolute_path" == "$RECYCLE_BIN_DIR" ]]
 	then 
-	   echo -e "${RED}Error: Cannot delete recycle bin itself.${NC}" > "$LOG_FILE"
+	   echo -e "${RED}Error: Cannot delete recycle bin itself.${NC}"
+	   echo -e "${RED}Error: Cannot delete recycle bin itself.${NC}" >> "$LOG_FILE"
 	   return 1
 	fi 
 	
 	local deletion_timestamp=$(date +"%Y-%m-%d_%H-%M-%S")
-	local file_size=$(stat -c %s "$file_path")
-	local file_type=$(stat -c %F "$file_path")
-	local original_permissions=$(stat -c %a "$file_path")
-	local original_owner=$(stat -c %U:%G "$file_path")
+	local file_size=$(du -k "$original_absolute_path/$original_file_name" | awk '{print $1}')
+	local file_type=$(stat -c %F "$original_absolute_path/$original_file_name")
+	local original_permissions=$(stat -c %a "$original_absolute_path/$original_file_name")
+	local original_owner=$(stat -c %U:%G "$original_absolute_path/$original_file_name")
 	
-	echo "Metadata successfully fetched!" > "$LOG_FILE"
+	echo "Metadata successfully fetched!" >> "$LOG_FILE"
 	
-	# Hint: Generate unique ID
-	echo "Generating file id..." > "$LOG_FILE"
+        echo "Checking disk space..." >> "$LOG_FILE"
+	local available_disk_space=$(df -k "$FILES_DIR" | tail -1 | awk '{print $4}')
+	         
+	if (( file_size > available_disk_space ))
+	then 
+	   echo -e "${RED}Error: Not enough space available!${NC}"
+	   echo -e "${RED}Error: Not enough space available!${NC}" >> "$LOG_FILE" 
+	   return 1
+	fi
 	
+	echo "There is enough disk space!" >> "$LOG_FILE"
+	
+	echo "Generating file id..." >> "$LOG_FILE"
 	local file_unique_id=$(generate_unique_id)
+	
+	
+	echo "Moving to recycle bin..."
+	echo "Moving to recycle bin..." >> "$LOG_FILE"
 
-	echo "Moving to recycle bin..." > "$LOG_FILE"
-
-	mv "$file_path" "$FILES_DIR/$file_unique_id"
+	mv "$original_absolute_path/$original_file_name" "$FILES_DIR/$file_unique_id" || 
+	{
+	   echo -e "${RED}Error: Permission denied!${NC}"
+	   echo -e "${RED}Error: Permission denied!${NC}" >> "$LOG_FILE"
+	   return 1
+	}
 	
-	echo "File moved!" > "$LOG_FILE"
+	echo "File moved as: $file_unique_id"
+	echo "File moved as: $file_unique_id" >> "$LOG_FILE"
 	
-	echo "Adding information to metadata file..." > "$LOG_FILE"
+	echo "Adding information to metadata file..." >> "$LOG_FILE"
 	
-	echo "$file_unique_id,$original_file_name,$file_path,$deletion_timestamp,$file_size,$file_type,$original_permissions,$original_owner" >> "$METADATA_FILE"
+	echo "$file_unique_id,$original_file_name,$original_absolute_path,$deletion_timestamp,$file_size,$file_type,$original_permissions,$original_owner" >> "$METADATA_FILE"
 	
-	echo "Information added successfully!" > "$LOG_FILE"
+	echo "Information added successfully!" >> "$LOG_FILE"
 	
 	return 0
 }
@@ -137,42 +158,101 @@ list_recycled() {
 # Returns: 0 on success, 1 on failure
 #################################################
 restore_file() {
-	# TODO: Implement this function
 	local recover_file="$1" 
+	local file_found=0
+	local PS3="Select an option: "
 	
-	echo "Restore function called with: $file_path" > "$LOG_FILE"
+	echo "Restore function called with: $recover_file" >> "$LOG_FILE"
 	
-	if [ -z "$file_id" ]; then
-		echo -e "${RED}Error: No file ID specified${NC}"
+	if [ -z "$recover_file" ]; then
+		echo -e "${RED}Error: No file ID specified${NC}" >> "$LOG_FILE"
 		return 1
 	fi
 	
-	# Your code here
-	# Hint: Search metadata for matching ID
-	# Hint: Get original path from metadata
-	# Hint: Check if original path exists
-	# Hint: Move file back and restore permissions
-	# Hint: Remove entry from metadata
-	echo "Searching file..." > "$LOG_FILE"
+	echo "Searching file..."
+	echo "Searching file..." >> "$LOG_FILE"
 	
-	while IFS=',' read -r file_id original_name original_path deletion_date file_size file_type permissions owner
+	while IFS=',' read -r file_id original_name original_path deletion_date file_size file_type permissions owner <&3
 	   do 
-	      if [[ "$recover_file_id" == "$file_id" || "$recover_file" == "$original_name" ]] 
+	      if [[ "$recover_file" == "$file_id" || "$recover_file" == "$original_name" ]] 
 	      then 
-	         echo "File match found!" > "$LOG_FILE"
+	         echo "File match found!"
+	         echo "File match found!" >> "$LOG_FILE"
+	         file_found=1
+	         local restore_name="$original_name"
+	         
+	         
 	         if [[ -d "$original_path" ]]
 	         then 
-	            if 
-	            echo "Old directory found, moving file back..." > "$LOG_FILE"
-	            mv "$FILES_DIR/$file_id" "$original_path/$original_name"
-	            echo "File moved!" > "$LOG_FILE"
-	         elif [[ 
-	            echo "Old directory does not exist anymore, creating parent directory..." > "$LOG_FILE"
-	   done < "$METADATA_FILE"
+	            echo "Old directory found!" >> "$LOG_FILE"
+	            if [[ -f "$original_path/$original_name" ]]
+	            then 
+	               echo "This file already exists at original path!"
+	               echo "This file already exists at original path!" >> "$LOG_FILE"
+	               select option in "Overwrite" "Restore with modified name" "Cancel operation"
+	               do 
+	                  case $option in 
+	                     "Overwrite")
+	                         echo "Overwrting file..." >> "$LOG_FILE"
+	                         ;; 
+	                     "Restore with modified name")
+	                         echo "Changing file name..." >> "$LOG_FILE"
+	                         local restore_timestamp=$(date +"%Y-%m-%d_%H-%M-%S")
+	                         restore_name="${original_name}_${restore_timestamp}"
+	                         ;;
+	                     "Cancel operation")
+	                         echo "Cancelling restore." >> "$LOG_FILE" 
+	                         return 1
+	                         ;;
+	                  esac
+	                  break
+	               done
+	            fi
+	         else 
+	            echo "Old directory does not exist anymore, creating parent directories..." >> "$LOG_FILE"
+	            mkdir -p "$original_path" || 
+	            {
+	               echo -e "${RED}Error: Permission denied!${NC}" >> "$LOG_FILE"
+	               return 1
+	            }
+	            echo "Parent directories created: $original_path" >> "$LOG_FILE"
+	         fi
 	         
-	      
-	
-	
+	         echo "Checking available disk space..." >> "$LOG_FILE"
+	         
+	         local available_disk_space=$(df -k "$original_path" | tail -1 | awk '{print $4}')
+
+	         if [[ $file_size -gt $available_disk_space ]]
+	         then 
+	            echo -e "${RED}Error: Not enough space available!${NC}" >> "$LOG_FILE" 
+	            return 1
+	         fi
+	         
+	         echo "Moving file..." > "$LOG_FILE"
+	         mv "$FILES_DIR/$file_id" "$original_path/$restore_name" || 
+	         {
+	            echo -e "${RED}Error: Permission denied!${NC}" >> "$LOG_FILE"
+	            return 1
+	         }
+	         
+	         echo "Restoring permissions..." >> "$LOG_FILE"
+	         chmod "$permissions" "$original_path/$original_name"
+	         
+	         echo "Removing data from metadata file..." >> "$LOG_FILE"
+	         sed -i "/^$file_id,/d" "$METADATA_FILE"
+	         
+	         echo "Restore complete!"
+	         echo "Restore complete!" >> "$LOG_FILE"
+	      fi
+
+	   done 3< "$METADATA_FILE"
+	   
+	   if [[ $file_found -eq 0 ]]
+	   then 
+	      echo "No match was found for file: $recover_file" >> "$LOG_FILE"
+	      return 1	
+	   fi
+	         
 	return 0
 }
 
@@ -200,11 +280,29 @@ empty_recyclebin() {
 # Returns: 0 on success
 #################################################
 search_recycled() {
-	# TODO: Implement this function
 	local pattern="$1"	
+	local matches_found=0
 	
-	# Your code here
-	# Hint: Use grep to search metadata
+	while IFS=',' read -r file_id original_name original_path deletion_date file_size file_type permissions owner
+	do
+	   if echo "$original_name" | grep -iq "$pattern" || echo "$original_path" | grep -iq "$pattern" 
+	   then 
+	      matches_found=$(($matches_found+1))
+	      if (( matches_found == 1 ))
+	      then 
+	         printf "%-20s %-20s %-40s %-20s %-12s %-23s %-15s %-20s\n" "Id" "Original Name" "Original Path" "Delete Date" "File Size" "File Type" "Permissions" "Owner"
+		 printf "%-20s %-20s %-40s %-20s %-12s %-23s %-15s %-20s\n" "--------------------" "--------------------" "----------------------------------------" "--------------------" "------------" "------------------" "--------------" "--------------------"
+	      fi
+	      
+	      printf "%-20s %-20s %-40s %-20s %-12s %-23s %-15s %-20s\n" "$file_id" "$original_name" "$original_path" "$deletion_date" "$file_size" "$file_type" "$permissions" "$owner"
+	   fi
+        done < "$METADATA_FILE"
+	
+	if (( matches_found == 0 ))
+	then 
+	   echo "No file with $pattern pattern was found"
+	   return 1
+	fi
 	
 	return 0
 }
