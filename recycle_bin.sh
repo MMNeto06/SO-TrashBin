@@ -149,21 +149,38 @@ delete_file() {
 # Returns: 0 on success
 #################################################
 list_recycled() {
-	# TODO: Implement this function
+	#TODO: implementar detailed
+	#confirmar que file size é legível
+	#Tratar lista vazia de forma graciosa DONE
+	#Mostrar totoal de itens e total de espaço ocupado DONE
 	echo "=== Recycle Bin Contents ==="
-	
-	# Your code here
-	# Hint: Read metadata file and format output
-	# Hint: Use printf for formatted table
-	# Hint: Skip header line
+	if [ -z $( ls -a "$FILES_DIR" ) ];then
+		echo "The Recycle Bin is Currently empty"
+		return 0
+	fi
 
+	local total_items=0
+	local total_size=0
+	#esta forma é detailed, forma normal deve apenas conter:
+		#id truncated
+		#nome original
+		#data e hora de apago
+		#filesize legível
 	while IFS=',' read -r file_id original_name original_path deletion_date file_size file_type permissions owner; do
 		if [ "$file_id" != "# Recycle Bin Metadata" ]; then
-			printf "%17s %30s %30s %19s %10s %20s %15s %20s\\n" "$file_id" "$original_name" "$original_path" "$deletion_date" "$file_size" "$file_type" "$permissions" "$owner"
-			#echo "$file_id $original_name $original_path $deletion_date $file_size $file_type $permissions $owner"
+			if [ "$file_id" == "ID" ]; then
+				printf "%-20s %-20s %-40s %-20s %-12s %-23s %-15s %-20s\n" "Id" "Original Name" "Original Path" "Delete Date" "File Size" "File Type" "Permissions" "Owner"
+				printf "%-20s %-20s %-40s %-20s %-12s %-23s %-15s %-20s\n" "--------------------" "--------------------" "----------------------------------------" "--------------------" "------------" "------------------" "--------------" "--------------------"
+			else
+				printf "%-20s %-20s %-40s %-20s %-12s %-23s %-15s %-20s\n" "$file_id" "$original_name" "$original_path" "$deletion_date" "$file_size" "$file_type" "$permissions" "$owner"
+				total_items=$(($total_items + 1))
+				total_size=$(($total_size + $file_size))
+			fi
 		fi
 	done < $METADATA_FILE
-	
+	echo "Listed Recycle Bin Contents" >> $LOG_FILE
+	echo "Number of Items in Recycle Bin: $total_items"
+	echo "Total Size of Recycle Bin: $total_size"
 	return 0
 }
 #################################################
@@ -278,20 +295,24 @@ restore_file() {
 # Returns: 0 on success
 #################################################
 empty_recyclebin() {
-	# TODO: Implement this function
-	
-	# Your code here
-	# Hint: Ask for confirmation
-	# Hint: Delete all files in FILES_DIR
-	# Hint: Reset metadata file
+	#TODO: implementar empty para ficheiro específico
+	#implementar --force para saltar confirmação
+	#Mostar somário do que foi apagado
+	#logar operações de apago
+
 	read -p "Continue? (Y/N): " confirm && [[ $confirm == [yY] || $confirm == [yY][eE][sS] ]] || exit 1
 
 	rm -r $FILES_DIR
 	mkdir -p "$FILES_DIR"
 	echo "Deleted all files"
+	echo "Deleted all files" >> $LOG_FILE
 
 	sed -i '3,$d' $METADATA_FILE #apaga da 3ª À última linha
+	echo "Metadata has been reset" >> $LOG_FILE
 	echo "Metadata has been reset"
+
+	echo "Recycle Bin emptied" >> $LOG_FILE
+	echo "Recycle Bin emptied"
 
 	return 0
 }
@@ -313,8 +334,8 @@ search_recycled() {
 	      matches_found=$(($matches_found+1))
 	      if (( matches_found == 1 ))
 	      then 
-	         printf "%-20s %-20s %-40s %-20s %-12s %-23s %-15s %-20s\n" "Id" "Original Name" "Original Path" "Delete Date" "File Size" "File Type" "Permissions" "Owner"
-		 printf "%-20s %-20s %-40s %-20s %-12s %-23s %-15s %-20s\n" "--------------------" "--------------------" "----------------------------------------" "--------------------" "------------" "------------------" "--------------" "--------------------"
+	        printf "%-20s %-20s %-40s %-20s %-12s %-23s %-15s %-20s\n" "Id" "Original Name" "Original Path" "Delete Date" "File Size" "File Type" "Permissions" "Owner"
+		 	printf "%-20s %-20s %-40s %-20s %-12s %-23s %-15s %-20s\n" "--------------------" "--------------------" "----------------------------------------" "--------------------" "------------" "------------------" "--------------" "--------------------"
 	      fi
 	      
 	      printf "%-20s %-20s %-40s %-20s %-12s %-23s %-15s %-20s\n" "$file_id" "$original_name" "$original_path" "$deletion_date" "$file_size" "$file_type" "$permissions" "$owner"
