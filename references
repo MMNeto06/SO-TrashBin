@@ -5,3 +5,11 @@ delete_file references:
  - disk free space: https://opensource.com/article/18/7/how-check-free-disk-space-linux
  - get absolute path: https://stackoverflow.com/questions/5265702/how-to-get-full-path-of-a-file
  - grep to search patterns: https://www.w3schools.com/bash/bash_grep.php
+
+list references:
+ - read line by line: https://stackoverflow.com/questions/10929453/read-a-file-line-by-line-assigning-the-value-to-a-variable
+ - printf: https://www.warp.dev/terminus/bash-printf
+
+empty references:
+ - confirmation: https://stackoverflow.com/questions/18544359/how-do-i-read-user-input-into-a-variable-in-bash
+ - hot to use sed: https://stackoverflow.com/questions/4881930/remove-the-last-line-from-a-file-in-bash & https://askubuntu.com/questions/992213/how-to-delete-specific-lines-from-a-txt-file

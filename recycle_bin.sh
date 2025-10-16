@@ -148,6 +148,13 @@ list_recycled() {
 	# Hint: Read metadata file and format output
 	# Hint: Use printf for formatted table
 	# Hint: Skip header line
+
+	while IFS=',' read -r file_id original_name original_path deletion_date file_size file_type permissions owner; do
+		if [ "$file_id" != "# Recycle Bin Metadata" ]; then
+			printf "%17s %30s %30s %19s %10s %20s %15s %20s\\n" "$file_id" "$original_name" "$original_path" "$deletion_date" "$file_size" "$file_type" "$permissions" "$owner"
+			#echo "$file_id $original_name $original_path $deletion_date $file_size $file_type $permissions $owner"
+		fi
+	done < $METADATA_FILE
 	
 	return 0
 }
@@ -269,7 +276,15 @@ empty_recyclebin() {
 	# Hint: Ask for confirmation
 	# Hint: Delete all files in FILES_DIR
 	# Hint: Reset metadata file
-	
+	read -p "Continue? (Y/N): " confirm && [[ $confirm == [yY] || $confirm == [yY][eE][sS] ]] || exit 1
+
+	rm -r $FILES_DIR
+	mkdir -p "$FILES_DIR"
+	echo "Deleted all files"
+
+	sed -i '3,$d' $METADATA_FILE #apaga da 3ª À última linha
+	echo "Metadata has been reset"
+
 	return 0
 }
 
@@ -324,7 +339,6 @@ OPTIONS:
 	delete <file> Move file/directory to recycle bin
 	list List all items in recycle bin
 	restore <id> Restore file by ID
-	Página 5 de 12
 	search <pattern> Search for files by name
 	empty Empty recycle bin permanently
 	help Display this help message
