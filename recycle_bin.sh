@@ -57,81 +57,89 @@ generate_unique_id() {
 # Returns: 0 on success, 1 on failure
 #################################################
 delete_file() {
-	local file_path="$1"
-	
-	echo "Delete function called with: $file_path" >> "$LOG_FILE"
-	
-	# Validate input
-	if [ -z "$file_path" ]; then
-	echo -e "${RED}Error: No file specified${NC}"
-	echo -e "${RED}Error: No file specified${NC}" >> "$LOG_FILE"
-	return 1
-	fi
-	
-	# Check if file exists
-	if [ ! -e "$file_path" ]; then
-	echo -e "${RED}Error: File '$file_path' does not exist${NC}"
-	echo -e "${RED}Error: File '$file_path' does not exist${NC}" >> "$LOG_FILE"
-	return 1
-	fi
-		
-	echo "Fetching metadata..." >> "$LOG_FILE"
-	
-	local original_file_name=$(basename "$file_path")
-        local original_absolute_path=$(dirname "$(realpath "$file_path")")
-	
-	# Check if deletion directory is not recycle bin itself
-	if [[ "$original_absolute_path" == "$RECYCLE_BIN_DIR" ]]
-	then 
-	   echo -e "${RED}Error: Cannot delete recycle bin itself.${NC}"
-	   echo -e "${RED}Error: Cannot delete recycle bin itself.${NC}" >> "$LOG_FILE"
-	   return 1
-	fi 
-	
-	local deletion_timestamp=$(date +"%Y-%m-%d_%H-%M-%S")
-	local file_size=$(du -k "$original_absolute_path/$original_file_name" | awk '{print $1}')
-	local file_type=$(stat -c %F "$original_absolute_path/$original_file_name")
-	local original_permissions=$(stat -c %a "$original_absolute_path/$original_file_name")
-	local original_owner=$(stat -c %U:%G "$original_absolute_path/$original_file_name")
-	
-	echo "Metadata successfully fetched!" >> "$LOG_FILE"
-	
-        echo "Checking disk space..." >> "$LOG_FILE"
-	local available_disk_space=$(df -k "$FILES_DIR" | tail -1 | awk '{print $4}')
-	         
-	if (( file_size > available_disk_space ))
-	then 
-	   echo -e "${RED}Error: Not enough space available!${NC}"
-	   echo -e "${RED}Error: Not enough space available!${NC}" >> "$LOG_FILE" 
-	   return 1
-	fi
-	
-	echo "There is enough disk space!" >> "$LOG_FILE"
-	
-	echo "Generating file id..." >> "$LOG_FILE"
-	local file_unique_id=$(generate_unique_id)
-	
-	
-	echo "Moving to recycle bin..."
-	echo "Moving to recycle bin..." >> "$LOG_FILE"
+	local exit_code=0
 
-	mv "$original_absolute_path/$original_file_name" "$FILES_DIR/$file_unique_id" || 
-	{
-	   echo -e "${RED}Error: Permission denied!${NC}"
-	   echo -e "${RED}Error: Permission denied!${NC}" >> "$LOG_FILE"
-	   return 1
-	}
+	for file_path in "$@"
+	do 
+		echo "Delete function called with: $file_path" >> "$LOG_FILE"
+		
+		# Validate input
+		if [ -z "$file_path" ]; then
+		echo -e "${RED}Error: No file specified${NC}"
+		echo -e "${RED}Error: No file specified${NC}" >> "$LOG_FILE"
+		exit_code=1
+		break
+		fi
+		
+		# Check if file exists
+		if [ ! -e "$file_path" ]; then
+		echo -e "${RED}Error: File '$file_path' does not exist${NC}"
+		echo -e "${RED}Error: File '$file_path' does not exist${NC}" >> "$LOG_FILE"
+		exit_code=1
+		continue
+		fi
+			
+		echo "Fetching metadata..." >> "$LOG_FILE"
+		
+		local original_file_name=$(basename "$file_path")
+		local original_absolute_path=$(dirname "$(realpath "$file_path")")
+		
+		# Check if deletion directory is not recycle bin itself
+		if [[ "$original_absolute_path" == "$RECYCLE_BIN_DIR" ]]
+		then 
+		   echo -e "${RED}Error: Cannot delete recycle bin itself.${NC}"
+		   echo -e "${RED}Error: Cannot delete recycle bin itself.${NC}" >> "$LOG_FILE"
+		   exit_code=1
+		   continue
+		fi 
+		
+		local deletion_timestamp=$(date +"%Y-%m-%d_%H-%M-%S")
+		local file_size=$(du -k "$original_absolute_path/$original_file_name" | awk '{print $1}')
+		local file_type=$(stat -c %F "$original_absolute_path/$original_file_name")
+		local original_permissions=$(stat -c %a "$original_absolute_path/$original_file_name")
+		local original_owner=$(stat -c %U:%G "$original_absolute_path/$original_file_name")
+		
+		echo "Metadata successfully fetched!" >> "$LOG_FILE"
+		
+		echo "Checking disk space..." >> "$LOG_FILE"
+		local available_disk_space=$(df -k "$FILES_DIR" | tail -1 | awk '{print $4}')
+			 
+		if (( file_size > available_disk_space ))
+		then 
+		   echo -e "${RED}Error: Not enough space available!${NC}"
+		   echo -e "${RED}Error: Not enough space available!${NC}" >> "$LOG_FILE" 
+		   exit_code=1
+		   continue
+		fi
+		
+		echo "There is enough disk space!" >> "$LOG_FILE"
+		
+		echo "Generating file id..." >> "$LOG_FILE"
+		local file_unique_id=$(generate_unique_id)
+		
+		
+		echo "Moving to recycle bin..."
+		echo "Moving to recycle bin..." >> "$LOG_FILE"
+
+		mv "$original_absolute_path/$original_file_name" "$FILES_DIR/$file_unique_id" || 
+		{
+		   echo -e "${RED}Error: Permission denied!${NC}"
+		   echo -e "${RED}Error: Permission denied!${NC}" >> "$LOG_FILE"
+		   exit_code=1
+		   continue
+		}
+		
+		echo "File moved as: $file_unique_id"
+		echo "File moved as: $file_unique_id" >> "$LOG_FILE"
+		
+		echo "Adding information to metadata file..." >> "$LOG_FILE"
+		
+		echo "$file_unique_id,$original_file_name,$original_absolute_path,$deletion_timestamp,$file_size,$file_type,$original_permissions,$original_owner" >> "$METADATA_FILE"
+		
+		echo "Information added successfully!" >> "$LOG_FILE"	
+	done
 	
-	echo "File moved as: $file_unique_id"
-	echo "File moved as: $file_unique_id" >> "$LOG_FILE"
-	
-	echo "Adding information to metadata file..." >> "$LOG_FILE"
-	
-	echo "$file_unique_id,$original_file_name,$original_absolute_path,$deletion_timestamp,$file_size,$file_type,$original_permissions,$original_owner" >> "$METADATA_FILE"
-	
-	echo "Information added successfully!" >> "$LOG_FILE"
-	
-	return 0
+	return $exit_code
 }
 
 #################################################
