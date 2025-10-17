@@ -149,38 +149,52 @@ delete_file() {
 # Returns: 0 on success
 #################################################
 list_recycled() {
-	#TODO: implementar detailed
-	#confirmar que file size é legível
+	#TODO: implementar detailed DONE
+	#confirmar que file size é legível DONE
 	#Tratar lista vazia de forma graciosa DONE
-	#Mostrar totoal de itens e total de espaço ocupado DONE
+	#Mostrar total de itens e total de espaço ocupado DONE
 	echo "=== Recycle Bin Contents ==="
-	if [ -z $( ls -a "$FILES_DIR" ) ];then
+
+	if [[ -z $( ls -A "$FILES_DIR" ) ]]; then
 		echo "The Recycle Bin is Currently empty"
 		return 0
 	fi
 
 	local total_items=0
 	local total_size=0
-	#esta forma é detailed, forma normal deve apenas conter:
-		#id truncated
-		#nome original
-		#data e hora de apago
-		#filesize legível
-	while IFS=',' read -r file_id original_name original_path deletion_date file_size file_type permissions owner; do
-		if [ "$file_id" != "# Recycle Bin Metadata" ]; then
-			if [ "$file_id" == "ID" ]; then
-				printf "%-20s %-20s %-40s %-20s %-12s %-23s %-15s %-20s\n" "Id" "Original Name" "Original Path" "Delete Date" "File Size" "File Type" "Permissions" "Owner"
-				printf "%-20s %-20s %-40s %-20s %-12s %-23s %-15s %-20s\n" "--------------------" "--------------------" "----------------------------------------" "--------------------" "------------" "------------------" "--------------" "--------------------"
-			else
-				printf "%-20s %-20s %-40s %-20s %-12s %-23s %-15s %-20s\n" "$file_id" "$original_name" "$original_path" "$deletion_date" "$file_size" "$file_type" "$permissions" "$owner"
-				total_items=$(($total_items + 1))
-				total_size=$(($total_size + $file_size))
+
+	if [ "$1" == "--detailed" ]; then #este imprime toda a informação
+		while IFS=',' read -r file_id original_name original_path deletion_date file_size file_type permissions owner; do
+			if [ "$file_id" != "# Recycle Bin Metadata" ]; then
+				if [ "$file_id" == "ID" ]; then
+					printf "%-20s %-20s %-40s %-20s %-15s %-23s %-15s %-20s\n" "Id" "Original Name" "Original Path" "Delete Date" "File Size (KB)" "File Type" "Permissions" "Owner"
+					printf "%-20s %-20s %-40s %-20s %-15s %-23s %-15s %-20s\n" "--------------------" "--------------------" "----------------------------------------" "--------------------" "---------------" "------------------" "--------------" "--------------------"
+				else
+					printf "%-20s %-20s %-40s %-20s %-15s %-23s %-15s %-20s\n" "$file_id" "$original_name" "$original_path" "$deletion_date" "$file_size" "$file_type" "$permissions" "$owner"
+					total_items=$(($total_items + 1))
+					total_size=$(($total_size + $file_size))
+				fi
 			fi
-		fi
-	done < $METADATA_FILE
+		done < "$METADATA_FILE"
+	else
+		#aqui imprime-se só: id (truncated), original name, deletion date, filesize (legível)
+		while IFS=',' read -r file_id original_name original_path deletion_date file_size file_type permissions owner; do
+			if [ "$file_id" != "# Recycle Bin Metadata" ]; then
+				if [ "$file_id" == "ID" ]; then
+					printf "%-20s %-20s %-20s %-15s\n" "Id" "Original Name" "Delete Date" "File Size (KB)"
+					printf "%-20s %-20s %-20s %-15s\n" "--------------------" "--------------------" "--------------------" "---------------"
+				else
+					printf "%-20s %-20s %-20s %-12s\n" "$file_id" "$original_name" "$deletion_date" "$file_size"
+					total_items=$(($total_items + 1))
+					total_size=$(($total_size + $file_size))
+				fi
+			fi
+		done < "$METADATA_FILE"
+	fi
+
 	echo "Listed Recycle Bin Contents" >> $LOG_FILE
 	echo "Number of Items in Recycle Bin: $total_items"
-	echo "Total Size of Recycle Bin: $total_size"
+	echo "Total Size of Recycle Bin (KB) : $total_size"
 	return 0
 }
 #################################################
@@ -295,25 +309,55 @@ restore_file() {
 # Returns: 0 on success
 #################################################
 empty_recyclebin() {
-	#TODO: implementar empty para ficheiro específico
-	#implementar --force para saltar confirmação
+	#TODO: implementar empty para ficheiro específico DONE
+	#implementar --force para saltar confirmação DONE
 	#Mostar somário do que foi apagado
 	#logar operações de apago
 
+	if [ "$1" == "--force" ]; then
+		rm -r $FILES_DIR
+		mkdir -p "$FILES_DIR"
+		echo "Deleted all files"
+		echo "Deleted all files" >> $LOG_FILE
+
+		sed -i '3,$d' $METADATA_FILE #apaga da 3ª À última linha
+		echo "Metadata has been reset" >> $LOG_FILE
+		echo "Metadata has been reset"
+
+		echo "Recycle Bin emptied" >> $LOG_FILE
+		echo "Recycle Bin emptied"
+		return 0
+	fi
+
 	read -p "Continue? (Y/N): " confirm && [[ $confirm == [yY] || $confirm == [yY][eE][sS] ]] || exit 1
 
-	rm -r $FILES_DIR
-	mkdir -p "$FILES_DIR"
-	echo "Deleted all files"
-	echo "Deleted all files" >> $LOG_FILE
+	if [ ! -z "$1" ]; then
+		while IFS=',' read -r file_id original_name original_path deletion_date file_size file_type permissions owner; do
+			if [[ "$file_id" == "$1" || "$original_name" == "$1" ]]; then
+				rm -r "$FILES_DIR/$file_id"
+				echo "$file_id - $original_name permanently deleted"
+				echo "$file_id - $original_name permanently deleted" >> $LOG_FILE
+				sed -i "/^$file_id,/d" "$METADATA_FILE"
+				echo "$file_id - $original_name removed from metadata"
+				echo "$file_id - $original_name removed from metadata" >> $LOG_FILE
+				return 0
+			fi
+		done < "$METADATA_FILE"
+		echo "${RED}Error: file name or id not found${NC}"
+		echo "${RED}Error: file name or id not found${NC}" >> $LOG_FILE
+	else
+		rm -r $FILES_DIR
+		mkdir -p "$FILES_DIR"
+		echo "Deleted all files"
+		echo "Deleted all files" >> $LOG_FILE
 
-	sed -i '3,$d' $METADATA_FILE #apaga da 3ª À última linha
-	echo "Metadata has been reset" >> $LOG_FILE
-	echo "Metadata has been reset"
+		sed -i '3,$d' $METADATA_FILE #apaga da 3ª À última linha
+		echo "Metadata has been reset" >> $LOG_FILE
+		echo "Metadata has been reset"
 
-	echo "Recycle Bin emptied" >> $LOG_FILE
-	echo "Recycle Bin emptied"
-
+		echo "Recycle Bin emptied" >> $LOG_FILE
+		echo "Recycle Bin emptied"
+	fi
 	return 0
 }
 
@@ -400,7 +444,7 @@ main() {
 			delete_file "$@"
 			;;
 		list)
-			list_recycled
+			list_recycled "$2"
 			;;
 		restore)
 			restore_file "$2"
@@ -409,7 +453,7 @@ main() {
 			search_recycled "$2"
 			;;
 		empty)
-			empty_recyclebin
+			empty_recyclebin "$2"
 			;;
 		help|--help|-h)
 			display_help
