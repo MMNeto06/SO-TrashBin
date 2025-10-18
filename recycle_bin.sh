@@ -159,7 +159,7 @@ list_recycled() {
 	echo "=== Recycle Bin Contents ==="
 
 	if [[ -z $( ls -A "$FILES_DIR" ) ]]; then
-		echo "The Recycle Bin is Currently empty"
+		echo "The Recycle Bin is Currently Empty"
 		return 0
 	fi
 
@@ -309,42 +309,26 @@ restore_file() {
 #################################################
 # Function: empty_recyclebin
 # Description: Permanently deletes all items
-# Parameters: None
-# Returns: 0 on success
+# Parameters: Up to 2
+# Returns: 0 on success, exit 1 if cancelled
 #################################################
 empty_recyclebin() {
 	#TODO: implementar empty para ficheiro específico DONE
 	#implementar --force para saltar confirmação DONE
-	#Mostar somário do que foi apagado
-	#logar operações de apago
+	#Mostar somário do que foi apagado DONE
+	#logar operações de apago DONE
 
-	if [ "$1" == "--force" ]; then
-		
-		echo "The following files will be deleted"
-		list_recycled
-		echo "The following files will be deleted" >> $LOG_FILE
-		list_recycled >> $LOG_FILE
-		
-		rm -r $FILES_DIR
-		mkdir -p "$FILES_DIR"
+	local force=1
 
-		echo "Deleted all files"
-		echo "Deleted all files" >> $LOG_FILE
-
-		sed -i '3,$d' $METADATA_FILE #apaga da 3ª À última linha
-		echo "Metadata has been reset" >> $LOG_FILE
-		echo "Metadata has been reset"
-
-		echo "Recycle Bin emptied" >> $LOG_FILE
-		echo "Recycle Bin emptied"
-		return 0
+	if [[ "$1" == "--force" || "$2 == --force" ]]; then
+		force=0
 	fi
 
-	if ["$2" != "--force" ]; then
+	if [ $force -eq 1 ]; then
 		read -p "Continue? (Y/N): " confirm && [[ $confirm == [yY] || $confirm == [yY][eE][sS] ]] || exit 1
 	fi
 
-	if [ ! -z "$1" ]; then
+	if [[ ! -z "$1" && "$1" != "--force" ]]; then
 		while IFS=',' read -r file_id original_name original_path deletion_date file_size file_type permissions owner; do
 			if [[ "$file_id" == "$1" || "$original_name" == "$1" ]]; then
 				rm -r "$FILES_DIR/$file_id"
@@ -359,6 +343,10 @@ empty_recyclebin() {
 		echo -e "${RED}Error: file name or id not found${NC}"
 		echo -e "${RED}Error: file name or id not found${NC}" >> $LOG_FILE
 	else
+		if [[ -z $( ls -A "$FILES_DIR" ) ]]; then
+			echo "The Recycle Bin is Currently Empty"
+			return 0
+		fi
 
 		echo "The following files will be deleted"
 		list_recycled
@@ -431,6 +419,7 @@ auto_cleanup(){
 
 	if [ $RETENTION_DAYS -eq -1 ]; then
 		echo "Retention days is not configured"
+		gedit $CONFIG_FILE
 		return 0
 	fi
 
@@ -440,9 +429,8 @@ auto_cleanup(){
 			local date_convert=$(echo "$deletion_date" | sed 's/_/ /; s/-/:/3; s/-/:/3')
 			local del_epoch=$(date --date="$date_convert" +"%s")
 			
-			#get cutoff date as epoch
-			local today=$(date +"%s")
-			local cutoff=$(($today - $RETENTION_DAYS*86400))
+			#get cutoff date as epoch (fonte é quick reference)
+			local cutoff=$(date -d "$RETENTION_DAYS days ago" +%s)
 			
 			#compare epochs
 			if [ $del_epoch -le $cutoff ]; then
@@ -464,12 +452,66 @@ auto_cleanup(){
 # Returns: 0 on success
 #################################################
 show_statistics(){
-	#TODO:Display total number of items in recycle bin 
+	#TODO:Display total number of items in recycle bin  DONE
 	# Show total storage used with quota percentage 	#SILVA FAZ QUOTA QUANDO PODERES
-	# Break down by file type (files vs directories) 
-	# Show oldest and newest items 
-	# Display average file size 
+	# Break down by file type (files vs directories) DONE
+	# Show oldest and newest items DONE
+	# Display average file size DONE
 
+	local total_items=0
+	local total_size=0
+	local n_files=0
+	local n_dir=0
+	local oldest_file=" "
+	local oldest_time=0
+	local newest_file=" "
+	local newest_time=0
+
+	while IFS=',' read -r file_id original_name original_path deletion_date file_size file_type permissions owner; do
+		if [[ "$file_id" != "ID" && "$file_id" != "# Recycle Bin Metadata" ]]; then
+			total_items=$(($total_items + 1))
+			total_size=$(($total_size + $file_size))
+			
+			if [ -d "$FILES_DIR/$file_id" ]; then
+				n_dir=$(($n_dir + 1))
+			else
+				n_files=$(($n_files + 1))
+			fi
+
+			local date_convert=$(echo "$deletion_date" | sed 's/_/ /; s/-/:/3; s/-/:/3')
+			local del_epoch=$(date --date="$date_convert" +"%s")
+
+			if [[ $oldest_time -eq 0 || $del_epoch -lt $oldest_time ]]; then
+				oldest_time=$del_epoch
+				oldest_file="$file_id - $original_name - $deletion_date - $file_type"
+			fi
+
+			if [[ $newest_time -eq 0 || $del_epoch -gt $newest_time ]]; then
+				newest_time=$del_epoch
+				newest_file="$file_id - $original_name - $deletion_date - $file_type"
+			fi
+		fi
+	done < "$METADATA_FILE"
+
+	local avg_file_size=$(echo "scale=3; $total_size / $total_items" | bc -l) #source-aula03e07.sh
+
+	echo "=== Statistics ==="
+	echo "Total number of items: $total_items"
+	echo "Total size of bin: $total_size" #TODO: ALTERAR QUANDO QUOTA FOR IMPLEMENTADA!!!!
+	echo "Number of files in bin: $n_files"
+	echo "Number of directories in bin: $n_dir"
+	echo "Oldest item in bin: $oldest_file"
+	echo "Newest item in bin: $newest_file"
+	echo "Average size of item: $avg_file_size KB" #TODO: CONFIRMAR QUE É TAMANHO MÉDIO DE ITEM E NÃO FICHEIROS
+
+	echo "=== Statistics ===" >> $LOG_FILE
+	echo "Total number of items: $total_items" >> $LOG_FILE
+	echo "Total size of bin: $total_size" >> $LOG_FILE #TODO: ALTERAR QUANDO QUOTA FOR IMPLEMENTADA!!!!
+	echo "Number of files in bin: $n_files" >> $LOG_FILE
+	echo "Number of directories in bin: $n_dir" >> $LOG_FILE
+	echo "Oldest item in bin: $oldest_file" >> $LOG_FILE
+	echo "Newest item in bin: $newest_file" >> $LOG_FILE
+	echo "Average size of item: $avg_file_size KB" >> $LOG_FILE #TODO: CONFIRMAR QUE É TAMANHO MÉDIO DE ITEM E NÃO FICHEIROS
 	return 0
 
 }
@@ -539,6 +581,9 @@ main() {
 			;;
 		autoclean)
 			auto_cleanup
+			;;
+		stats)
+			show_statistics
 			;;
 		*)
 			echo "Invalid option. Use 'help' for usage information."
