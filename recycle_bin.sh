@@ -1,7 +1,7 @@
 #!/bin/bash
 #################################################
 # Linux Recycle Bin Simulation
-# Author: [Your Name]
+# Author: Diogo Silva e Miguel Neto
 # Date: [Date]
 # Description: Shell-based recycle bin system
 #################################################
@@ -30,8 +30,11 @@ initialize_recyclebin() {
 	if [ ! -d "$RECYCLE_BIN_DIR" ]; then
 		mkdir -p "$FILES_DIR"
 		touch "$METADATA_FILE"
+		touch "$CONFIG_FILE"
 		echo "# Recycle Bin Metadata" > "$METADATA_FILE"
 		echo "ID,ORIGINAL_NAME,ORIGINAL_PATH,DELETION_DATE,FILE_SIZE,FILE_TYPE,PERMISSIONS,OWNER" >> "$METADATA_FILE"
+		echo "#!/bin/bash" >> "$CONFIG_FILE"
+		echo "RETENTION_DAYS=-1" >> "$CONFIG_FILE"
 		echo "Recycle bin initialized at $RECYCLE_BIN_DIR"
 		return 0
 	fi
@@ -150,7 +153,7 @@ delete_file() {
 #################################################
 list_recycled() {
 	#TODO: implementar detailed DONE
-	#confirmar que file size é legível DONE
+	#confirmar que file size é legível DONE		#CONFIRMAR QUE ESTÁ DONE
 	#Tratar lista vazia de forma graciosa DONE
 	#Mostrar total de itens e total de espaço ocupado DONE
 	echo "=== Recycle Bin Contents ==="
@@ -178,6 +181,7 @@ list_recycled() {
 		done < "$METADATA_FILE"
 	else
 		#aqui imprime-se só: id (truncated), original name, deletion date, filesize (legível)
+		#TODO: o que é o id (truncated)???
 		while IFS=',' read -r file_id original_name original_path deletion_date file_size file_type permissions owner; do
 			if [ "$file_id" != "# Recycle Bin Metadata" ]; then
 				if [ "$file_id" == "ID" ]; then
@@ -315,8 +319,15 @@ empty_recyclebin() {
 	#logar operações de apago
 
 	if [ "$1" == "--force" ]; then
+		
+		echo "The following files will be deleted"
+		list_recycled
+		echo "The following files will be deleted" >> $LOG_FILE
+		list_recycled >> $LOG_FILE
+		
 		rm -r $FILES_DIR
 		mkdir -p "$FILES_DIR"
+
 		echo "Deleted all files"
 		echo "Deleted all files" >> $LOG_FILE
 
@@ -329,7 +340,9 @@ empty_recyclebin() {
 		return 0
 	fi
 
-	read -p "Continue? (Y/N): " confirm && [[ $confirm == [yY] || $confirm == [yY][eE][sS] ]] || exit 1
+	if ["$2" != "--force" ]; then
+		read -p "Continue? (Y/N): " confirm && [[ $confirm == [yY] || $confirm == [yY][eE][sS] ]] || exit 1
+	fi
 
 	if [ ! -z "$1" ]; then
 		while IFS=',' read -r file_id original_name original_path deletion_date file_size file_type permissions owner; do
@@ -343,9 +356,15 @@ empty_recyclebin() {
 				return 0
 			fi
 		done < "$METADATA_FILE"
-		echo "${RED}Error: file name or id not found${NC}"
-		echo "${RED}Error: file name or id not found${NC}" >> $LOG_FILE
+		echo -e "${RED}Error: file name or id not found${NC}"
+		echo -e "${RED}Error: file name or id not found${NC}" >> $LOG_FILE
 	else
+
+		echo "The following files will be deleted"
+		list_recycled
+		echo "The following files will be deleted" >> $LOG_FILE
+		list_recycled >> $LOG_FILE
+		
 		rm -r $FILES_DIR
 		mkdir -p "$FILES_DIR"
 		echo "Deleted all files"
@@ -393,6 +412,66 @@ search_recycled() {
 	fi
 	
 	return 0
+}
+
+#################################################
+# Function: auto_cleanup
+# Description: Auto clean old files from bin
+# Parameters: None
+# Returns: 0 on success
+#################################################
+auto_cleanup(){
+	#TODO: Automatically delete items older than RETENTION_DAYS DONE
+	#Read retention period from config file DONE
+	#Provide cleanup summary DONE
+	#Run manually or integrate into delete operation - CURRENTLY IS MANUAL
+
+	#Get config file variables
+	source "$CONFIG_FILE"
+
+	if [ $RETENTION_DAYS -eq -1 ]; then
+		echo "Retention days is not configured"
+		return 0
+	fi
+
+	while IFS=',' read -r file_id original_name original_path deletion_date file_size file_type permissions owner; do
+		if [[ "$file_id" != "ID" && "$file_id" != "# Recycle Bin Metadata" ]]; then
+			#get deletion date as epoch
+			local date_convert=$(echo "$deletion_date" | sed 's/_/ /; s/-/:/3; s/-/:/3')
+			local del_epoch=$(date --date="$date_convert" +"%s")
+			
+			#get cutoff date as epoch
+			local today=$(date +"%s")
+			local cutoff=$(($today - $RETENTION_DAYS*86400))
+			
+			#compare epochs
+			if [ $del_epoch -le $cutoff ]; then
+				echo "auto_cleanup will delete $file_id - $original_name"
+				echo "auto_cleanup will delete $file_id - $original_name" >> $LOG_FILE
+				empty_recyclebin $file_id "--force"
+			fi
+		fi
+	done < "$METADATA_FILE"
+
+	return 0
+}
+
+
+#################################################
+# Function: show_statistics
+# Description: Shows statistics about the bin
+# Parameters: None
+# Returns: 0 on success
+#################################################
+show_statistics(){
+	#TODO:Display total number of items in recycle bin 
+	# Show total storage used with quota percentage 	#SILVA FAZ QUOTA QUANDO PODERES
+	# Break down by file type (files vs directories) 
+	# Show oldest and newest items 
+	# Display average file size 
+
+	return 0
+
 }
 
 #################################################
@@ -457,6 +536,9 @@ main() {
 			;;
 		help|--help|-h)
 			display_help
+			;;
+		autoclean)
+			auto_cleanup
 			;;
 		*)
 			echo "Invalid option. Use 'help' for usage information."

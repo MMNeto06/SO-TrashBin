@@ -9,7 +9,13 @@ delete_file references:
 list references:
  - read line by line: https://stackoverflow.com/questions/10929453/read-a-file-line-by-line-assigning-the-value-to-a-variable
  - printf: https://www.warp.dev/terminus/bash-printf
+ - o quick guide providenciado
 
 empty references:
  - confirmation: https://stackoverflow.com/questions/18544359/how-do-i-read-user-input-into-a-variable-in-bash
  - hot to use sed: https://stackoverflow.com/questions/4881930/remove-the-last-line-from-a-file-in-bash & https://askubuntu.com/questions/992213/how-to-delete-specific-lines-from-a-txt-file
+ - o quick guide providenciado
+
+auto_cleanup refrence:
+ - config file source idea: https://askubuntu.com/questions/743493/best-way-to-read-a-config-file-in-bash
+ - date epoch: https://schuchert.github.io/daily%20tech/2021/02/14/SedBreakdown.html?utm (+chatgpt)
