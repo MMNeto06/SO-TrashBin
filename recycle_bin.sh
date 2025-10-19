@@ -34,7 +34,10 @@ initialize_recyclebin() {
 		echo "# Recycle Bin Metadata" > "$METADATA_FILE"
 		echo "ID,ORIGINAL_NAME,ORIGINAL_PATH,DELETION_DATE,FILE_SIZE,FILE_TYPE,PERMISSIONS,OWNER" >> "$METADATA_FILE"
 		echo "#!/bin/bash" >> "$CONFIG_FILE"
+		echo "#This is the config file. It behaves like any other bash script" >> "$CONFIG_FILE"
+		echo "#All variables here are imported to the main script when they're needed" >> "$CONFIG_FILE"
 		echo "RETENTION_DAYS=-1" >> "$CONFIG_FILE"
+		echo "MAX_SIZE_MB=-1" >> "$CONFIG_FILE"
 		echo "Recycle bin initialized at $RECYCLE_BIN_DIR"
 		return 0
 	fi
@@ -584,6 +587,9 @@ main() {
 			;;
 		stats)
 			show_statistics
+			;;
+		config)
+			gedit "$CONFIG_FILE"
 			;;
 		*)
 			echo "Invalid option. Use 'help' for usage information."
