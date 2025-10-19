@@ -5,6 +5,7 @@ delete_file references:
  - disk free space: https://opensource.com/article/18/7/how-check-free-disk-space-linux
  - get absolute path: https://stackoverflow.com/questions/5265702/how-to-get-full-path-of-a-file
  - grep to search patterns: https://www.w3schools.com/bash/bash_grep.php
+ - using cut to separate line: https://unix.stackexchange.com/questions/452508/how-to-use-the-command-cut-to-cut-out-fields-in-a-csv-file-when-fields-contain
 
 list references:
  - read line by line: https://stackoverflow.com/questions/10929453/read-a-file-line-by-line-assigning-the-value-to-a-variable

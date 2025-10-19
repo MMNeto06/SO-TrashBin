@@ -74,7 +74,7 @@ delete_file() {
 		echo -e "${RED}Error: No file specified${NC}"
 		echo -e "${RED}Error: No file specified${NC}" >> "$LOG_FILE"
 		exit_code=1
-		break
+		continue
 		fi
 		
 		# Check if file exists
@@ -88,10 +88,11 @@ delete_file() {
 		echo "Fetching metadata..." >> "$LOG_FILE"
 		
 		local original_file_name=$(basename "$file_path")
-		local original_absolute_path=$(dirname "$(realpath "$file_path")")
+		local original_absolute_path=$(realpath "$file_path")
+		local original_dir=$(dirname "$original_absolute_path")
 		
 		# Check if deletion directory is not recycle bin itself
-		if [[ "$original_absolute_path" == "$RECYCLE_BIN_DIR" ]]
+		if [[ "$original_absolute_path" == "$RECYCLE_BIN_DIR" || "$original_dir" == "$RECYCLE_BIN_DIR" ]]
 		then 
 		   echo -e "${RED}Error: Cannot delete recycle bin itself.${NC}"
 		   echo -e "${RED}Error: Cannot delete recycle bin itself.${NC}" >> "$LOG_FILE"
@@ -100,10 +101,10 @@ delete_file() {
 		fi 
 		
 		local deletion_timestamp=$(date +"%Y-%m-%d_%H-%M-%S")
-		local file_size=$(du -k "$original_absolute_path/$original_file_name" | awk '{print $1}')
-		local file_type=$(stat -c %F "$original_absolute_path/$original_file_name")
-		local original_permissions=$(stat -c %a "$original_absolute_path/$original_file_name")
-		local original_owner=$(stat -c %U:%G "$original_absolute_path/$original_file_name")
+		local file_size=$(du -k "$original_absolute_path" | awk '{print $1}')
+		local file_type=$(stat -c %F "$original_absolute_path")
+		local original_permissions=$(stat -c %a "$original_absolute_path")
+		local original_owner=$(stat -c %U:%G "$original_absolute_path")
 		
 		echo "Metadata successfully fetched!" >> "$LOG_FILE"
 		
@@ -127,7 +128,7 @@ delete_file() {
 		echo "Moving to recycle bin..."
 		echo "Moving to recycle bin..." >> "$LOG_FILE"
 
-		mv "$original_absolute_path/$original_file_name" "$FILES_DIR/$file_unique_id" || 
+		mv "$original_absolute_path" "$FILES_DIR/$file_unique_id" || 
 		{
 		   echo -e "${RED}Error: Permission denied!${NC}"
 		   echo -e "${RED}Error: Permission denied!${NC}" >> "$LOG_FILE"
@@ -233,12 +234,13 @@ restore_file() {
 	         echo "File match found!" >> "$LOG_FILE"
 	         file_found=1
 	         local restore_name="$original_name"
+	         local original_dir=$(dirname "$original_path")
 	         
 	         
-	         if [[ -d "$original_path" ]]
+	         if [[ -d "$original_dir" ]]
 	         then 
 	            echo "Old directory found!" >> "$LOG_FILE"
-	            if [[ -f "$original_path/$original_name" ]]
+	            if [[ -f "$original_dir/$original_name" ]]
 	            then 
 	               echo "This file already exists at original path!"
 	               echo "This file already exists at original path!" >> "$LOG_FILE"
@@ -263,17 +265,17 @@ restore_file() {
 	            fi
 	         else 
 	            echo "Old directory does not exist anymore, creating parent directories..." >> "$LOG_FILE"
-	            mkdir -p "$original_path" || 
+	            mkdir -p "$original_dir" || 
 	            {
 	               echo -e "${RED}Error: Permission denied!${NC}" >> "$LOG_FILE"
 	               return 1
 	            }
-	            echo "Parent directories created: $original_path" >> "$LOG_FILE"
+	            echo "Parent directories created: $original_dir" >> "$LOG_FILE"
 	         fi
 	         
 	         echo "Checking available disk space..." >> "$LOG_FILE"
 	         
-	         local available_disk_space=$(df -k "$original_path" | tail -1 | awk '{print $4}')
+	         local available_disk_space=$(df -k "$original_dir" | tail -1 | awk '{print $4}')
 
 	         if [[ $file_size -gt $available_disk_space ]]
 	         then 
@@ -282,14 +284,14 @@ restore_file() {
 	         fi
 	         
 	         echo "Moving file..." > "$LOG_FILE"
-	         mv "$FILES_DIR/$file_id" "$original_path/$restore_name" || 
+	         mv "$FILES_DIR/$file_id" "$original_dir/$restore_name" || 
 	         {
 	            echo -e "${RED}Error: Permission denied!${NC}" >> "$LOG_FILE"
 	            return 1
 	         }
 	         
 	         echo "Restoring permissions..." >> "$LOG_FILE"
-	         chmod "$permissions" "$original_path/$original_name"
+	         chmod "$permissions" "$original_dir/$restore_name"
 	         
 	         echo "Removing data from metadata file..." >> "$LOG_FILE"
 	         sed -i "/^$file_id,/d" "$METADATA_FILE"
@@ -447,6 +449,51 @@ auto_cleanup(){
 	return 0
 }
 
+#################################################
+# Function: check_quota
+# Description: Check if recycle bin exceeds MAX_SIZE_MB
+# Parameters: None
+# Returns: 0 on success
+#################################################
+check_quota(){
+	echo "check_quota function called." >> "$LOG_FILE"
+	
+	source "$CONFIG_FILE"
+	
+	if [[ $MAX_SIZE_MB -eq -1 ]] 
+	then 
+		echo "Max_Size is not configured."
+		gedit $CONFIG_FILE
+		return 0
+        fi 
+        
+        echo "MAX_SIZE_MB = $MAX_SIZE_MB" >> "$LOG_FILE"
+        
+        echo "Fetching recycle bin size..." >> "$LOG_FILE"
+        local recycle_bin_size=$(du -sm "$RECYCLE_BIN_DIR" | awk '{print $1}')
+        echo "Recycle bin size: $recycle_bin_size MB." >> "$LOG_FILE"
+        
+        if (( recycle_bin_size >= MAX_SIZE_MB )) 
+        then 
+        	echo -e "${RED}WARNING: Recycle bin is full!${NC}"
+        	echo -e "${RED}WARNING: Recycle bin is full!${NC}" >> "$LOG_FILE"
+        	echo "Asking user to clear space..." >> "$LOG_FILE"
+        	echo "Do you want to clear some space in recycle bin? [Y/N]"
+        	read choice
+        	if [[ $choice == "Y" || $choice == "y" ]] 
+        	then 
+        		echo "Clearing space..."
+        		echo "Clearing space..." >> "$LOG_FILE"
+        		auto_cleanup
+                else 
+                	echo "User denied" >> "$LOG_FILE"
+                	return 1
+                fi 
+        fi 
+        
+        return 0
+}
+
 
 #################################################
 # Function: show_statistics
@@ -517,6 +564,53 @@ show_statistics(){
 	echo "Average size of item: $avg_file_size KB" >> $LOG_FILE #TODO: CONFIRMAR QUE É TAMANHO MÉDIO DE ITEM E NÃO FICHEIROS
 	return 0
 
+}
+
+########################################################################################
+# Function: file_preview
+# Description: Show first 10 lines for text files or file information for binary files
+# Parameters: $1 - unique ID of file to preview
+# Returns: 0 on success
+########################################################################################
+file_preview(){
+	local file_id="$1"
+	
+	# Validate input
+	if [ -z "$file_id" ]; then
+	echo -e "${RED}Error: No file id specified${NC}"
+	echo -e "${RED}Error: No file id specified${NC}" >> "$LOG_FILE"
+	return 1
+	fi
+		
+	echo "file_preview function called with: $file_id" >> "$LOG_FILE"
+	
+	local file_path="$FILES_DIR/$file_id"
+	
+	# Check if file exists
+	if [ ! -e "$file_path" ]; then
+	echo -e "${RED}Error: File '$file_path' does not exist${NC}"
+	echo -e "${RED}Error: File '$file_path' does not exist${NC}" >> "$LOG_FILE"
+	return 1
+	fi
+	
+	if file "$file_path" | grep -q text
+	then 
+		echo "$file_id is a text file."
+		echo "$file_id is a text file." >> "$LOG_FILE"
+		echo "Showing first ten lines... " >> "$LOG_FILE"
+		
+		echo "First ten lines: "
+		head -n 10 "$file_path"
+	else 
+		echo "$file_id is a binary file."
+		echo "$file_id is a binary file." >> "$LOG_FILE"
+		echo "Displaying file information..." >> "$LOG_FILE"
+		
+		echo "File information: "
+		file "$file_path"
+	fi
+	
+	return 0
 }
 
 #################################################
@@ -590,6 +684,9 @@ main() {
 			;;
 		config)
 			gedit "$CONFIG_FILE"
+			;;
+		preview) 
+			file_preview "$2"
 			;;
 		*)
 			echo "Invalid option. Use 'help' for usage information."
