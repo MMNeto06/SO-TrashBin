@@ -423,8 +423,7 @@ auto_cleanup(){
 	source "$CONFIG_FILE"
 
 	if [ $RETENTION_DAYS -eq -1 ]; then
-		echo "Retention days is not configured"
-		gedit $CONFIG_FILE
+		echo "Retention days is not configured."
 		return 0
 	fi
 
@@ -683,7 +682,7 @@ main() {
 			show_statistics
 			;;
 		config)
-			gedit "$CONFIG_FILE"
+			nano "$CONFIG_FILE"
 			;;
 		preview) 
 			file_preview "$2"
