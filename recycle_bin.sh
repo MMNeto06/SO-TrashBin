@@ -226,7 +226,7 @@ restore_file() {
 	echo "Searching file..."
 	echo "Searching file..." >> "$LOG_FILE"
 	
-	while IFS=',' read -r file_id original_name original_path deletion_date file_size file_type permissions owner <&3
+	tail -n +2 $METADATA_FILE | while IFS=',' read -r file_id original_name original_path deletion_date file_size file_type permissions owner <&3
 	   do 
 	      if [[ "$recover_file" == "$file_id" || "$recover_file" == "$original_name" ]] 
 	      then 
@@ -383,7 +383,7 @@ search_recycled() {
 	local pattern="$1"	
 	local matches_found=0
 	
-	while IFS=',' read -r file_id original_name original_path deletion_date file_size file_type permissions owner
+	tail -n +2 $METADATA_FILE | while IFS=',' read -r file_id original_name original_path deletion_date file_size file_type permissions owner
 	do
 	   if echo "$original_name" | grep -iq "$pattern" || echo "$original_path" | grep -iq "$pattern" 
 	   then 
