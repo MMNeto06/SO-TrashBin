@@ -684,6 +684,9 @@ main() {
 		config)
 			nano "$CONFIG_FILE"
 			;;
+		quota) 
+			check_quota
+			;; 
 		preview) 
 			file_preview "$2"
 			;;
