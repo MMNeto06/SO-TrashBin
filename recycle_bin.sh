@@ -31,8 +31,9 @@ initialize_recyclebin() {
 		mkdir -p "$FILES_DIR"
 		touch "$METADATA_FILE"
 		touch "$CONFIG_FILE"
+		touch "$LOG_FILE"
 		echo "# Recycle Bin Metadata" > "$METADATA_FILE"
-		echo "ID,ORIGINAL_NAME,ORIGINAL_PATH,DELETION_DATE,FILE_SIZE,FILE_TYPE,PERMISSIONS,OWNER" >> "$METADATA_FILE"
+		echo "ID|ORIGINAL_NAME|ORIGINAL_PATH|DELETION_DATE|FILE_SIZE|FILE_TYPE|PERMISSIONS|OWNER" >> "$METADATA_FILE"
 		echo "#!/bin/bash" >> "$CONFIG_FILE"
 		echo "#This is the config file. It behaves like any other bash script" >> "$CONFIG_FILE"
 		echo "#All variables here are imported to the main script when they're needed" >> "$CONFIG_FILE"
@@ -124,7 +125,6 @@ delete_file() {
 		echo "Generating file id..." >> "$LOG_FILE"
 		local file_unique_id=$(generate_unique_id)
 		
-		
 		echo "Moving to recycle bin..."
 		echo "Moving to recycle bin..." >> "$LOG_FILE"
 
@@ -141,7 +141,7 @@ delete_file() {
 		
 		echo "Adding information to metadata file..." >> "$LOG_FILE"
 		
-		echo "$file_unique_id,$original_file_name,$original_absolute_path,$deletion_timestamp,$file_size,$file_type,$original_permissions,$original_owner" >> "$METADATA_FILE"
+		echo "$file_unique_id|$original_file_name|$original_absolute_path|$deletion_timestamp|$file_size|$file_type|$original_permissions|$original_owner" >> "$METADATA_FILE"
 		
 		echo "Information added successfully!" >> "$LOG_FILE"	
 	done
@@ -186,7 +186,7 @@ list_recycled() {
 	else
 		#aqui imprime-se só: id (truncated), original name, deletion date, filesize (legível)
 		#TODO: o que é o id (truncated)???
-		while IFS=',' read -r file_id original_name original_path deletion_date file_size file_type permissions owner; do
+		while IFS='|' read -r file_id original_name original_path deletion_date file_size file_type permissions owner; do
 			if [ "$file_id" != "# Recycle Bin Metadata" ]; then
 				if [ "$file_id" == "ID" ]; then
 					printf "%-20s %-20s %-20s %-15s\n" "Id" "Original Name" "Delete Date" "File Size (KB)"
@@ -226,7 +226,7 @@ restore_file() {
 	echo "Searching file..."
 	echo "Searching file..." >> "$LOG_FILE"
 	
-	tail -n +2 $METADATA_FILE | while IFS=',' read -r file_id original_name original_path deletion_date file_size file_type permissions owner <&3
+	while IFS='|' read -r file_id original_name original_path deletion_date file_size file_type permissions owner <&3
 	   do 
 	      if [[ "$recover_file" == "$file_id" || "$recover_file" == "$original_name" ]] 
 	      then 
@@ -294,13 +294,13 @@ restore_file() {
 	         chmod "$permissions" "$original_dir/$restore_name"
 	         
 	         echo "Removing data from metadata file..." >> "$LOG_FILE"
-	         sed -i "/^$file_id,/d" "$METADATA_FILE"
+	         sed -i "/^$file_id|/d" "$METADATA_FILE"
 	         
 	         echo "Restore complete!"
 	         echo "Restore complete!" >> "$LOG_FILE"
 	      fi
 
-	   done 3< "$METADATA_FILE"
+	   done 3< <(tail -n +3 "$METADATA_FILE")
 	   
 	   if [[ $file_found -eq 0 ]]
 	   then 
@@ -334,12 +334,12 @@ empty_recyclebin() {
 	fi
 
 	if [[ ! -z "$1" && "$1" != "--force" ]]; then
-		while IFS=',' read -r file_id original_name original_path deletion_date file_size file_type permissions owner; do
+		while IFS='|' read -r file_id original_name original_path deletion_date file_size file_type permissions owner; do
 			if [[ "$file_id" == "$1" || "$original_name" == "$1" ]]; then
 				rm -r "$FILES_DIR/$file_id"
 				echo "$file_id - $original_name permanently deleted"
 				echo "$file_id - $original_name permanently deleted" >> $LOG_FILE
-				sed -i "/^$file_id,/d" "$METADATA_FILE"
+				sed -i "/^$file_id|/d" "$METADATA_FILE"
 				echo "$file_id - $original_name removed from metadata"
 				echo "$file_id - $original_name removed from metadata" >> $LOG_FILE
 				return 0
@@ -383,20 +383,22 @@ search_recycled() {
 	local pattern="$1"	
 	local matches_found=0
 	
-	tail -n +2 $METADATA_FILE | while IFS=',' read -r file_id original_name original_path deletion_date file_size file_type permissions owner
+	while IFS='|' read -r file_id original_name original_path deletion_date file_size file_type permissions owner
 	do
 	   if echo "$original_name" | grep -iq "$pattern" || echo "$original_path" | grep -iq "$pattern" 
 	   then 
 	      matches_found=$(($matches_found+1))
+	      echo $matches_found
 	      if (( matches_found == 1 ))
 	      then 
 	        printf "%-20s %-20s %-40s %-20s %-12s %-23s %-15s %-20s\n" "Id" "Original Name" "Original Path" "Delete Date" "File Size" "File Type" "Permissions" "Owner"
 		 	printf "%-20s %-20s %-40s %-20s %-12s %-23s %-15s %-20s\n" "--------------------" "--------------------" "----------------------------------------" "--------------------" "------------" "------------------" "--------------" "--------------------"
 	      fi
-	      
+
 	      printf "%-20s %-20s %-40s %-20s %-12s %-23s %-15s %-20s\n" "$file_id" "$original_name" "$original_path" "$deletion_date" "$file_size" "$file_type" "$permissions" "$owner"
 	   fi
-        done < "$METADATA_FILE"
+        done < <(tail -n +3 "$METADATA_FILE")
+	
 	
 	if (( matches_found == 0 ))
 	then 
@@ -427,7 +429,7 @@ auto_cleanup(){
 		return 0
 	fi
 
-	while IFS=',' read -r file_id original_name original_path deletion_date file_size file_type permissions owner; do
+	while IFS='|' read -r file_id original_name original_path deletion_date file_size file_type permissions owner; do
 		if [[ "$file_id" != "ID" && "$file_id" != "# Recycle Bin Metadata" ]]; then
 			#get deletion date as epoch
 			local date_convert=$(echo "$deletion_date" | sed 's/_/ /; s/-/:/3; s/-/:/3')
@@ -516,7 +518,7 @@ show_statistics(){
 	local newest_file=" "
 	local newest_time=0
 
-	while IFS=',' read -r file_id original_name original_path deletion_date file_size file_type permissions owner; do
+	while IFS='|' read -r file_id original_name original_path deletion_date file_size file_type permissions owner; do
 		if [[ "$file_id" != "ID" && "$file_id" != "# Recycle Bin Metadata" ]]; then
 			total_items=$(($total_items + 1))
 			total_size=$(($total_size + $file_size))
