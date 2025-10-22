@@ -182,9 +182,9 @@ list_recycled() {
 	local total_size=0
 
 	if [ "$1" == "--detailed" ]; then #este imprime toda a informação
-		while IFS=',' read -r file_id original_name original_path deletion_date file_size file_type permissions owner; do
+		while IFS='|' read -r file_id original_name original_path deletion_date file_size file_type permissions owner; do
 			if [ "$file_id" != "# Recycle Bin Metadata" ]; then
-				if [ "$file_id" == "ID" ]; then
+				if [[ "$file_id" == "ID" ]]; then
 					printf "%-20s %-20s %-40s %-20s %-15s %-23s %-15s %-20s\n" "Id" "Original Name" "Original Path" "Delete Date" "File Size (KB)" "File Type" "Permissions" "Owner"
 					printf "%-20s %-20s %-40s %-20s %-15s %-23s %-15s %-20s\n" "--------------------" "--------------------" "----------------------------------------" "--------------------" "---------------" "------------------" "--------------" "--------------------"
 				else
@@ -481,33 +481,33 @@ check_quota(){
 		echo "Max_Size is not configured."
 		gedit $CONFIG_FILE
 		return 0
-        fi 
+    fi 
         
-        echo "MAX_SIZE_MB = $MAX_SIZE_MB" >> "$LOG_FILE"
+    echo "MAX_SIZE_MB = $MAX_SIZE_MB" >> "$LOG_FILE"
         
-        echo "Fetching recycle bin size..." >> "$LOG_FILE"
-        local recycle_bin_size=$(du -sm "$RECYCLE_BIN_DIR" | awk '{print $1}')
-        echo "Recycle bin size: $recycle_bin_size MB." >> "$LOG_FILE"
+    echo "Fetching recycle bin size..." >> "$LOG_FILE"
+    local recycle_bin_size=$(du -sm "$RECYCLE_BIN_DIR" | awk '{print $1}')
+    echo "Recycle bin size: $recycle_bin_size MB." >> "$LOG_FILE"
         
-        if (( recycle_bin_size >= MAX_SIZE_MB )) 
+    if (( recycle_bin_size >= MAX_SIZE_MB )) 
+    then 
+        echo -e "${RED}WARNING: Recycle bin is full!${NC}"
+        echo -e "${RED}WARNING: Recycle bin is full!${NC}" >> "$LOG_FILE"
+        echo "Asking user to clear space..." >> "$LOG_FILE"
+        echo "Do you want to clear some space in recycle bin? [Y/N]"
+        read choice
+        if [[ $choice == "Y" || $choice == "y" ]] 
         then 
-        	echo -e "${RED}WARNING: Recycle bin is full!${NC}"
-        	echo -e "${RED}WARNING: Recycle bin is full!${NC}" >> "$LOG_FILE"
-        	echo "Asking user to clear space..." >> "$LOG_FILE"
-        	echo "Do you want to clear some space in recycle bin? [Y/N]"
-        	read choice
-        	if [[ $choice == "Y" || $choice == "y" ]] 
-        	then 
-        		echo "Clearing space..."
-        		echo "Clearing space..." >> "$LOG_FILE"
-        		auto_cleanup
-                else 
-                	echo "User denied" >> "$LOG_FILE"
-                	return 1
-                fi 
+        	echo "Clearing space..."
+        	echo "Clearing space..." >> "$LOG_FILE"
+        	auto_cleanup
+        else 
+            echo "User denied" >> "$LOG_FILE"
+            return 1
         fi 
+    fi 
         
-        return 0
+    return 0
 }
 
 
@@ -519,11 +519,12 @@ check_quota(){
 #################################################
 show_statistics(){
 	#TODO:Display total number of items in recycle bin  DONE
-	# Show total storage used with quota percentage 	#SILVA FAZ QUOTA QUANDO PODERES
+	# Show total storage used with quota percentage 	DONE
 	# Break down by file type (files vs directories) DONE
 	# Show oldest and newest items DONE
 	# Display average file size DONE
 
+	source "$CONFIG_FILE"
 	local total_items=0
 	local total_size=0
 	local n_files=0
@@ -559,11 +560,18 @@ show_statistics(){
 		fi
 	done < "$METADATA_FILE"
 
-	local avg_file_size=$(echo "scale=3; $total_size / $total_items" | bc -l) #source-aula03e07.sh
+	local avg_file_size=$(echo "scale=3; $total_size / $total_items" | bc -l) #source - aula03e07.sh
+	local recycle_bin_size_mb=$(du -sm "$RECYCLE_BIN_DIR" | awk '{print $1}')
+	local quota_percentage;
 
 	echo "=== Statistics ==="
 	echo "Total number of items: $total_items"
-	echo "Total size of bin: $total_size" #TODO: ALTERAR QUANDO QUOTA FOR IMPLEMENTADA!!!!
+	if [[ $MAX_SIZE_MB -eq -1 ]]; then
+		echo "Total size of bin: $total_size"
+	else
+		quota_percentage=$(echo "scale=3; $recycle_bin_size_mb / $MAX_SIZE_MB" | bc -l)
+		echo "Storage used: $quota_percentage %"
+	fi
 	echo "Number of files in bin: $n_files"
 	echo "Number of directories in bin: $n_dir"
 	echo "Oldest item in bin: $oldest_file"
@@ -572,7 +580,11 @@ show_statistics(){
 
 	echo "=== Statistics ===" >> $LOG_FILE
 	echo "Total number of items: $total_items" >> $LOG_FILE
-	echo "Total size of bin: $total_size" >> $LOG_FILE #TODO: ALTERAR QUANDO QUOTA FOR IMPLEMENTADA!!!!
+	if [[ $MAX_SIZE_MB -eq -1 ]]; then
+		echo "Total size of bin: $total_size" >> $LOG_FILE
+	else
+		echo "Storage used: $quota_percentage %" >> $LOG_FILE
+	fi
 	echo "Number of files in bin: $n_files" >> $LOG_FILE
 	echo "Number of directories in bin: $n_dir" >> $LOG_FILE
 	echo "Oldest item in bin: $oldest_file" >> $LOG_FILE
@@ -649,6 +661,11 @@ OPTIONS:
 	search <pattern> Search for files by name
 	empty Empty recycle bin permanently
 	help Display this help message
+	autoclean Eliminates old files in recycle bin
+	stats Shows statistics about recycle bin
+	config Opens config file for editing
+	quota Checks if recycle bin exceeds quota
+	preview <id> Allows to preview files by id 
 
 EXAMPLES:
 	$0 delete myfile.txt
@@ -656,6 +673,10 @@ EXAMPLES:
 	$0 restore 1696234567_abc123
 	$0 search "*.pdf"
 	$0 empty
+	$0 autoclean
+	$0 stats
+	$0 quota
+	$0 preview 1234567890_abc123
 
 EOF
 	return 0

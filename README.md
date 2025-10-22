@@ -28,13 +28,15 @@ Após a instalação, o sistema pode ser executado através do programa principa
 	
 Estas são as opções disponíveis: 
 	- delete <file>: Move o ficheiro para a reciclagem, em vez de o eliminar permanentemente. Note-se que pode passar vários ficheiros como argumento, ou até mesmo diretórios.
-	- list: TODO
+	- list [--detailed]: Lista todos os ficheiros atualmente na reciclagem. A flag --detailed mostra mais informação na listagem
 	- restore <file_name or file_id>: Restora o ficheiro para a sua localização original. 
 	- search <search_pattern>: Procura ficheiros reciclados que correspondem ao padrão indicado.
-	- empty: TODO
+	- empty: [--force] [file_name or file_id]: Elimina permanentemente todos os ficheiros da reciclagem após confirmação. 
+	A flag --force salta a confirmação. Opcionalmente pode-se eliminar um ficheiro específico.
 	- help: Mostra uma mensagem de ajuda com todos os comandos disponíveis.
-	- autoclean: TODO
-	- stats: TODO
+	- autoclean: Automaticamente elimina permanentemente os itens mais velhos da reciclagem.
+	A 'velhice' de um item é especificado no ficheiro de configurações.
+	- stats: Mostra estatísticas sobre a reciclagem
 	- config: Abre o ficheiro de configurações para que possa alterar o seu conteúdo.
 	- quota: Verifica o espaço ocupado pela reciclagem e compara com o máximo permitido. Caso seja exceda o máximo, o utilizador tem a possibilidade de realizar uma limpeza.
 	- preview <file_id>: Mostras as primeiras dez linhas do conteúdo do ficheiro cujo id corresponde a file_id, no caso deste se tratar de um ficheiro de texto. Se for um ficheiro binário, mostra algumas informações. 
@@ -42,16 +44,20 @@ Estas são as opções disponíveis:
 Exemplos de utilização:
 	./recycle_bin.sh delete testFile: Envia o ficheiro testFile para a reciclagem. 
 	./recycle_bin.sh delete testFile1 testFile2 testFile3: Envia os ficheiros testFile1, testFile2 e testFile3 para a reciclagem. 
-	list aqui
+	./recycle_bin.sh list: Lista os conteúdos da reciclagem.
+	./recycle_bin.sh list --detailed: Lista os conteúdos da reciclagem com mais detalhe.
 	./recycle_bin.sh restore testFile: Restora o ficheiro testFile, que foi previamente reciclado. 
 	./recycle_bin.sh restore file_id: Restora o ficheiro reciclado cujo id corresponde a file_id. Note-se que file_id é apenas para efeitos de exemplo, ao executar o programa deve utilizar um id verdadeiro.
 	./recycle_bin.sh search *.txt: Lista informações de todos os ficheiros que tenham a extensão .txt.
-	empty aqui
-	./recycle_bin.sh help
-	autoclean aqui
-	stats aqui
-	./recycle_bin.sh config
+	./recycle_bin.sh empty: Esvazia a reciclagem apoś confirmação do utilizador.
+	./recycle_bin.sh empty --force: Esvazia a reciclagem.
+	./recycle_bin.sh empty file_id: Elimina da reciclagem o ficheiro reciclado após confirmação do utilizador
+	./recycle_bin.sh help: Imprime informação de ajuda sobre como utilizar o script.
+	./recycle_bin.sh autoclean: Esvazia automaticamente da reciclagem ficheiros velhos.
+	./recycle_bin.sh stats: Mostra estatísticas sobre a reciclagem.
+	./recycle_bin.sh config: Abre o ficheiro de configuração para ser editado.
 	./recycle_bin.sh quota
+	./recycle_bin.sh preview
 	
 ## Features
 ### Funcionalidades Obrigatórias
