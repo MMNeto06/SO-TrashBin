@@ -1,10 +1,11 @@
 #!/bin/bash
-#################################################
+
+#######################################################
 # Linux Recycle Bin Simulation
-# Author: Diogo Silva e Miguel Neto
+# Author: Diogo Silva (125240) e Miguel Neto (125200)
 # Date: [Date]
 # Description: Shell-based recycle bin system
-#################################################
+#######################################################
 
 # Global Configuration
 RECYCLE_BIN_DIR="$HOME/.recycle_bin"
@@ -403,7 +404,6 @@ search_recycled() {
 	   if echo "$original_name" | grep -iqE "$safe_pattern" || echo "$original_path" | grep -iqE "$safe_pattern" 
 	   then 
 	      matches_found=$(($matches_found+1))
-	      echo $matches_found
 	      if (( matches_found == 1 ))
 	      then 
 	        printf "%-20s %-20s %-40s %-20s %-12s %-23s %-15s %-20s\n" "Id" "Original Name" "Original Path" "Delete Date" "File Size" "File Type" "Permissions" "Owner"
@@ -417,7 +417,8 @@ search_recycled() {
 	
 	if (( matches_found == 0 ))
 	then 
-	   echo "No file with $pattern pattern was found"
+	   echo -e "${RED}Error: No file with '$pattern' was found.${NC}" 
+	   echo -e "${RED}Error: No file with '$pattern' was found.${NC}" >> "$LOG_FILE"
 	   return 1
 	fi
 	
@@ -425,7 +426,7 @@ search_recycled() {
 }
 
 #################################################
-# Function: auto_cleanup
+# Function: auto_cleanup (OPTIONAL)
 # Description: Auto clean old files from bin
 # Parameters: None
 # Returns: 0 on success
@@ -466,7 +467,7 @@ auto_cleanup(){
 }
 
 #################################################
-# Function: check_quota
+# Function: check_quota (OPTIONAL)
 # Description: Check if recycle bin exceeds MAX_SIZE_MB
 # Parameters: None
 # Returns: 0 on success
@@ -512,7 +513,7 @@ check_quota(){
 
 
 #################################################
-# Function: show_statistics
+# Function: show_statistics (OPTIONAL)
 # Description: Shows statistics about the bin
 # Parameters: None
 # Returns: 0 on success
@@ -583,7 +584,7 @@ show_statistics(){
 }
 
 ########################################################################################
-# Function: file_preview
+# Function: file_preview (OPTIONAL)
 # Description: Show first 10 lines for text files or file information for binary files
 # Parameters: $1 - unique ID of file to preview
 # Returns: 0 on success
