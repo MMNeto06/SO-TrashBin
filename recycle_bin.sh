@@ -65,6 +65,7 @@ generate_unique_id() {
 #################################################
 delete_file() {
 	local exit_code=0
+	local this_absolute_path=$(realpath "$0") # absolute path of this script
 
 	for file_path in "$@"
 	do 
@@ -85,12 +86,22 @@ delete_file() {
 		exit_code=1
 		continue
 		fi
+		
 			
 		echo "Fetching metadata..." >> "$LOG_FILE"
 		
 		local original_file_name=$(basename "$file_path")
 		local original_absolute_path=$(realpath "$file_path")
 		local original_dir=$(dirname "$original_absolute_path")
+		
+		if [[ "$original_absolute_path" == "$this_absolute_path" ]] 
+		then 
+			echo -e "${RED}Error: Cannot delete main script.${NC}"
+			echo -e "${RED}Error: Cannot delete main script${NC}" >> "$LOG_FILE"
+			exit_code=1
+			continue
+		fi
+		
 		
 		# Check if deletion directory is not recycle bin itself
 		if [[ "$original_absolute_path" == "$RECYCLE_BIN_DIR" || "$original_dir" == "$RECYCLE_BIN_DIR" ]]
@@ -252,7 +263,7 @@ restore_file() {
 	                         ;; 
 	                     "Restore with modified name")
 	                         echo "Changing file name..." >> "$LOG_FILE"
-	                         local restore_timestamp=$(date +"%Y-%m-%d_%H-%M-%S")
+	                         local restore_timestamp=$(date +"%Y-%m-%d_%H:%M:%S")
 	                         restore_name="${original_name}_${restore_timestamp}"
 	                         ;;
 	                     "Cancel operation")
@@ -383,9 +394,13 @@ search_recycled() {
 	local pattern="$1"	
 	local matches_found=0
 	
+	# METER REFERÊNCIA
+	local safe_pattern=$(printf '%s' "$pattern" | sed 's/[.[\^$+{}()|]/\\&/g')
+	safe_pattern=$(printf '%s' "$safe_pattern" | sed 's/\*/.*/g; s/\?/./g')
+	
 	while IFS='|' read -r file_id original_name original_path deletion_date file_size file_type permissions owner
 	do
-	   if echo "$original_name" | grep -iq "$pattern" || echo "$original_path" | grep -iq "$pattern" 
+	   if echo "$original_name" | grep -iqE "$safe_pattern" || echo "$original_path" | grep -iqE "$safe_pattern" 
 	   then 
 	      matches_found=$(($matches_found+1))
 	      echo $matches_found
