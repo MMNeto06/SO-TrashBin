@@ -240,7 +240,7 @@
 - Help message: 
 ![Help message](screenshots/testcase11_error_message.png)
 
-## Edge Cases
+## Edge Cases (EU)
 
 ### Test Case 13: Delete Non-Existent File
 **Objective:** Verify that it is not possible to delete a non-existent file
@@ -283,7 +283,7 @@
 
 ### Test Case 24: Restore Files to Read-Only Directories (TODO) -> EU 
 
-## Error Handling
+## Error Handling (MIGUEL)
 
 ### Test Case 25: Invalid Command Line Arguments
 
@@ -299,7 +299,7 @@
 
 ### Test Case 31: Concurrent Operations
 
-## Performance Tests
+## Performance Tests (MIGUEL)
 
 ### Test Case 32: Delete 100+ Files
 
@@ -309,6 +309,6 @@
 
 ### Test Case 35: Restore from Recycle Bin with Many Items
 
-## Optional Features Tests
+## Optional Features Tests (SPLIT)
 
 ### TODO 
