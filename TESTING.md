@@ -96,9 +96,81 @@
 - List output: 
 ![List output](screenshots/testcase3_list_output.png)
 
-### Test Case 4: TODO (Delete Empty Directory) -> EU 
+### Test Case 4: Delete Empty Directory
+**Objective:** Verify an empty directory can be deleted successfully
 
-### Test Case 5: TODO (Delete Directory with Contents (recursive)) -> EU
+**Steps:**
+1. Run (Create a new directory): `mkdir -p testDir`
+2. Run: `./recycle_bin.sh delete testDir`
+3. Verify that the directory is removed 
+4. Run: `./recycle_bin.sh list --detailed`
+5. Verify that testDir appears on recycle bin
+
+**Expected Result:**
+- Directory is moved to ~/.recycle_bin/files/
+- Metadata entry is created
+- Success message is displayed
+- Directory appears in list output
+
+**Actual Result:** 
+- Success message is displayed: "File moved as: 1761431980_559qlh"
+- Directory is moved
+- Metadata entry is created: "1761431980_559qlh|testDir|/home/dsilva/Desktop/SO-TrashBin/testDir|2025-10-25_23-39-40|4|directory|775|dsilva:dsilva"
+- Directory appears in list output
+
+**Status:** ✅ Pass
+
+**Screenshots:** 
+- Success message displayed:
+![Success message](screenshots/testcase4_directory_moved_message.png)
+
+- Metadata entry: 
+![Metadata entry](screenshots/testcase4_metadata_entry.png)
+
+- List output: 
+![List output](screenshots/testcase4_list_output.png)
+
+### Test Case 5: Delete Directory with Contents
+**Objective:** Verify a directory with contents can be deleted successfully
+
+**Steps:**
+1. Run (Create a new directory): `mkdir -p testDir`
+2. Run (Create files inside testDir): `touch testDir/testFile1 testDir/testFile2`
+2. Run: `./recycle_bin.sh delete testDir`
+3. Verify that the directory is removed, aswell as its contents
+4. Run: `./recycle_bin.sh list --detailed`
+5. Verify that testDir appears on recycle bin
+6. Run: `ls ~/.recycle_bin/files/{delete_id}`
+7. Verify directory contents are still there
+
+**Expected Result:**
+- Directory and its contents are moved to ~/.recycle_bin/files/
+- Metadata entry is created
+- Success message is displayed
+- Directory appears in list output
+- Directory contents are still there
+
+**Actual Result:** 
+- Success message is displayed: "File moved as: 1761432984_wk4bpj"
+- Directory is moved
+- Metadata entry is created: "1761432984_wk4bpj|testDir|/home/dsilva/Desktop/SO-TrashBin/testDir|2025-10-25_23-56-24|4|directory|775|dsilva:dsilva"
+- Directory appears in list output
+- Directory contents are still there: testFile1, testFile2
+
+**Status:** ✅ Pass
+
+**Screenshots:** 
+- Success message displayed:
+![Success message](screenshots/testcase5_directory_moved_message.png)
+
+- Metadata entry: 
+![Metadata entry](screenshots/testcase5_metadata_entry.png)
+
+- List output: 
+![List output](screenshots/testcase5_list_output.png)
+
+- Directory contents: 
+![Directory contents](screenshots/testcase5_directory_contents.png)
 
 ### Test Case 6: List Empty Recycle Bin
 **Objective:** Verify that an empty recycle bin is handled by the script
@@ -165,15 +237,15 @@ The Recycle Bin is Currently Empty
 
 **Screenshots:** 
 - Success message displayed:
-![Success message](screenshots/testcase4_restore_message.png)
+![Success message](screenshots/testcase7_restore_message.png)
 
 - Metadata file has no entries: 
-![Metadata file entries](screenshots/testcase4_metadata_entries.png)
+![Metadata file entries](screenshots/testcase7_metadata_entries.png)
 
 - List output: 
-![List output](screenshots/testcase4_list_output.png)
+![List output](screenshots/testcase7_list_output.png)
 
-### Test Case 8: Restore to Non-existent Original Path -> VAI SOFRER ALTERAÇÕES, TODO
+### Test Case 8: Restore to Non-Existent Original Path
 **Objective:** Verify that a file can be restored to a non-existent original path successfully
 
 **Important:** Be careful with file names (it is safer to use file ids) or make sure that recycle bin is empty.
@@ -186,12 +258,13 @@ The Recycle Bin is Currently Empty
 5. Run: `rmdir testDir`
 6. Verify testDir does not exist anymore
 7. Run: `./recycle_bin.sh restore testFile`
-8. Verify that testDir (original directory) is created and that testFile is inside it.
+8. Run: `ls testDir`
+9. Verify that testDir (original directory) is created and that testFile is inside it.
 
 **Expected Result:**
 - File is moved to ~/.recycle_bin/files/
 - Success deletion message is displayed
-- Original directory is created
+- Original directory (deleted) is created
 - File is moved to original directory
 - Metadata entry is erased
 - Success restore message is displayed
@@ -206,14 +279,21 @@ The Recycle Bin is Currently Empty
 **Status:** ✅ Pass
 
 **Screenshots:** 
-- Success message displayed:
-![Success message](screenshots/testcase4_restore_message.png)
+- Success deletion message:
+![Deletion message](screenshots/testcase8_deletion_message.png)
+
+- Success restore message:
+![Restore message](screenshots/testcase8_restore_message.png)
 
 - Metadata file has no entries: 
-![Metadata file entries](screenshots/testcase4_metadata_entries.png)
+![Metadata file entries](screenshots/testcase8_metadata_entries.png)
 
 - List output: 
-![List output](screenshots/testcase4_list_output.png)
+![List output](screenshots/testcase8_list_output.png)
+
+- Original path created: 
+
+![Original path](screenshots/testcase8_original_path.png)
 
 ### Test Case 9: Empty Entire Recycle Bin
 **Objective:** Verify that the script can empty the whole bin at once
@@ -308,7 +388,7 @@ The Recycle Bin is Currently Empty
 - Help message: 
 ![Help message](screenshots/testcase11_error_message.png)
 
-## Edge Cases (EU)
+## Edge Cases 
 
 ### Test Case 13: Delete Non-Existent File
 **Objective:** Verify that it is not possible to delete a non-existent file
@@ -393,7 +473,7 @@ The Recycle Bin is Currently Empty
 
 ### Test Case 18: Handle Filenames with Special Characters (TODO) -> EU 
 
-### Test Case 19: Handle Very Long Filenames (TODO)
+### Test Case 19: Handle Very Long Filenames (TODO) -> EU
 
 ### Test Case 20: Handle Very Large Files (TODO) -> EU 
 
