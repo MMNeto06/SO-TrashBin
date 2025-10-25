@@ -262,8 +262,62 @@
 ![Error message](screenshots/testcase13_error_message.png)
 
 ### Test Case 14: Delete File Without Permissions (TODO) -> EU 
+**Objective:** Verify that the script handles attempts to delete a file without sufficient permissions correctly.
+
+**WARNING**: This test case requires superuser permissions (sudo). Use caution, as incorrect execution of privileged commands may affect system stability.
+
+**Steps:**
+1. Run (Create a file on a protected directory): `sudo touch /protectedFile`
+2. Run: `./recycle_bin.sh delete /protectedFile`
+3. Verify that an error message is displayed
+4. Verify that the file was not moved from it's current directory
+5. Run: `./recycle_bin.sh list`
+6. Verify that the file does not appear on the list
+7. (Optional) Remove the test file: `sudo rm /protectedFile`
+
+**Expected Result:**
+- Error message is displayed
+- File is not moved
+- File does not appear on recycle bin files list
+
+**Actual Result:** 
+- Error message is displayed: "Error: Permission denied!"
+- File is not moved
+- File does not appear on recycle bin files list
+
+**Status:** ✅ Pass
+
+**Screenshots:** FALTA ISTO AQUI 
+- Test image: 
+![Test image](screenshots/testcase14_test_image.png)
 
 ### Test Case 15: Restore when Original Location has same Filename (TODO) -> EU
+**Objective:** Verify that the script handles attempts to delete a file without sufficient permissions correctly.
+
+**Pre-condition:** File must already exist in recycle bin (follow Test Case 2: Delete Single File) and there should be a file, with the same name as the deleted one, in the restoring directory.
+
+**Steps:**
+1. Run (Create a new file): `touch protectedFile`
+2. Run (Change permissions): `chmod 000 protectedFile`
+3. Run: `./recycle_bin.sh delete protectedFile`
+4. Verify that an error message is displayed
+5. Verify that the file was not moved from it's current directory
+6. Run: `./recycle_bin.sh list`
+7. Verify that the file does not appear on the list
+
+**Expected Result:**
+- Error message is displayed
+- File is not moved
+- File does not appear on recycle bin files list
+
+**Actual Result:** 
+- Error message is displayed: "Error: File 'nonExistentFile' does not exist"
+
+**Status:** ✅ Pass
+
+**Screenshots:** 
+- Test image: 
+![Test image](screenshots/testcase14_test_image.png)
 
 ### Test Case 16: Restore with Non-Existent File Id (TODO) -> EU 
 
