@@ -40,6 +40,8 @@ initialize_recyclebin() {
 		echo "#All variables here are imported to the main script when they're needed" >> "$CONFIG_FILE"
 		echo "RETENTION_DAYS=-1" >> "$CONFIG_FILE"
 		echo "MAX_SIZE_MB=-1" >> "$CONFIG_FILE"
+		echo "PASSWD_ACTIVE=0" >> "$CONFIG_FILE"
+		echo "PASSWD_VALUE=1234" >> "$CONFIG_FILE"
 		echo "Recycle bin initialized at $RECYCLE_BIN_DIR"
 		return 0
 	fi
@@ -197,14 +199,13 @@ list_recycled() {
 		done < "$METADATA_FILE"
 	else
 		#aqui imprime-se só: id (truncated), original name, deletion date, filesize (legível)
-		#TODO: o que é o id (truncated)???
 		while IFS='|' read -r file_id original_name original_path deletion_date file_size file_type permissions owner; do
 			if [ "$file_id" != "# Recycle Bin Metadata" ]; then
 				if [ "$file_id" == "ID" ]; then
 					printf "%-20s %-20s %-20s %-15s\n" "Id" "Original Name" "Delete Date" "File Size (KB)"
 					printf "%-20s %-20s %-20s %-15s\n" "--------------------" "--------------------" "--------------------" "---------------"
 				else
-					printf "%-20s %-20s %-20s %-12s\n" "$file_id" "$original_name" "$deletion_date" "$file_size"
+					printf "%-20s %-20s %-20s %-12s\n" "${file_id:0:10}_..." "$original_name" "$deletion_date" "$file_size"
 					total_items=$(($total_items + 1))
 					total_size=$(($total_size + $file_size))
 				fi
@@ -330,19 +331,24 @@ restore_file() {
 # Returns: 0 on success, exit 1 if cancelled
 #################################################
 empty_recyclebin() {
-	#TODO: implementar empty para ficheiro específico DONE
-	#implementar --force para saltar confirmação DONE
-	#Mostar somário do que foi apagado DONE
-	#logar operações de apago DONE
+	source "$CONFIG_FILE"
 
 	local force=1
 
-	if [[ "$1" == "--force" || "$2 == --force" ]]; then
+	if [[ "$1" == "--force" || "$2" == "--force" ]]; then
 		force=0
 	fi
-
+	
 	if [ $force -eq 1 ]; then
 		read -p "Continue? (Y/N): " confirm && [[ $confirm == [yY] || $confirm == [yY][eE][sS] ]] || exit 1
+		if [[ $PASSWD_ACTIVE -eq 1 ]]; then
+			read -sp "Please input your current password to continue: " passwd
+			echo ""
+			if [[ "$passwd" != "$PASSWD_VALUE" ]]; then
+				echo "Wrong password" 
+				exit 1
+			fi
+		fi
 	fi
 
 	if [[ ! -z "$1" && "$1" != "--force" ]]; then
@@ -432,17 +438,24 @@ search_recycled() {
 # Returns: 0 on success
 #################################################
 auto_cleanup(){
-	#TODO: Automatically delete items older than RETENTION_DAYS DONE
-	#Read retention period from config file DONE
-	#Provide cleanup summary DONE
-	#Run manually or integrate into delete operation - CURRENTLY IS MANUAL
+	#at this moment, autoclean runs manually
 
 	#Get config file variables
 	source "$CONFIG_FILE"
+	local count=0
 
 	if [ $RETENTION_DAYS -eq -1 ]; then
 		echo "Retention days is not configured."
 		return 0
+	fi
+
+	if [[ $PASSWD_ACTIVE -eq 1 ]]; then
+		read -sp "Please input your current password to continue: " passwd
+		echo ""
+		if [[ "$passwd" != "$PASSWD_VALUE" ]]; then
+			echo "Wrong password" 
+			exit 1
+		fi
 	fi
 
 	while IFS='|' read -r file_id original_name original_path deletion_date file_size file_type permissions owner; do
@@ -458,11 +471,20 @@ auto_cleanup(){
 			if [ $del_epoch -le $cutoff ]; then
 				echo "auto_cleanup will delete $file_id - $original_name"
 				echo "auto_cleanup will delete $file_id - $original_name" >> $LOG_FILE
+				count=$(($count + 1))
 				empty_recyclebin $file_id "--force"
 			fi
 		fi
 	done < "$METADATA_FILE"
 
+	if [[ $count -eq 0 ]]; then
+		echo "Autoclean didn't delete any files"
+		echo "Autoclean didn't delete any files" >> $LOG_FILE
+	else
+		echo "Autoclean deleted $count files"
+		echo "Autoclean deleted $count files" >> $LOG_FILE
+	fi
+	
 	return 0
 }
 
@@ -643,6 +665,76 @@ file_preview(){
 }
 
 #################################################
+# Function: secure_operation
+# Description: Adds password protection for sensitive operations
+# Parameters: None
+# Returns: 0 on success, exit 1 if cancelled
+#################################################
+secure_operation(){
+	source "$CONFIG_FILE"
+	local passwd_active=$PASSWD_ACTIVE
+	local passwd_value=$PASSWD_VALUE
+	echo "secure_operation called" >> "$LOG_FILE"
+	if [[ $passwd_active -eq 0 ]]; then
+		read -p "Password is currently inactive, would you like to activate it? [Y/n]" activate
+		if [[ ! "$activate" =~ ^([yY]|[yY][eE][sS])$ ]]; then
+			echo "Exiting"
+			return 0
+		fi
+		read -sp "Please set your new password: " passwd
+		echo ""
+		passwd_active=1
+		passwd_value="$passwd"
+		echo "Password is now active and set"
+		echo "Password is now active and set" >> "$LOG_FILE"
+	elif [[ $passwd_active -eq 1 ]]; then
+		echo "Password is currently active"
+		echo "Would you like to:"
+		echo "(1) : Deactivate password"
+		echo "(2) : Change password"
+		echo "(3) : Exit"
+		read option
+
+		if [[ $option -eq 1 ]]; then
+			read -sp "Please input your current password: " passwd
+			echo ""
+			if [[ "$passwd" == "$passwd_value" ]]; then
+				passwd_active=0
+				echo "Password is now inactive"
+				echo "Password is now inactive" >> "$LOG_FILE"
+			else
+				echo "Wrong password, try again"
+				exit 1
+			fi
+		elif [[ $option -eq 2 ]]; then
+			read -sp "Please input your current password: " passwd
+			echo ""
+			if [[ "$passwd" == "$passwd_value" ]]; then
+				read -sp "Please set your new password: " passwd
+				echo ""
+				passwd_value="$passwd"
+				echo "Password has been changed"
+				echo "Password has been changed" >> "$LOG_FILE"
+			else
+				echo "Wrong password, try again"
+				exit 1
+			fi
+		else
+			echo "Exiting"
+			return 0
+		fi
+	else
+		echo "An error has ocurred, deactivating password"
+		passwd_active=0
+	fi
+
+	sed -i '6,7d' $CONFIG_FILE
+	echo "PASSWD_ACTIVE=$passwd_active" >> "$CONFIG_FILE"
+	echo "PASSWD_VALUE=$passwd_value" >> "$CONFIG_FILE"
+	return 0
+}
+
+#################################################
 # Function: display_help
 # Description: Shows usage information
 # Parameters: None
@@ -728,6 +820,9 @@ main() {
 			;; 
 		preview) 
 			file_preview "$2"
+			;;
+		secure)
+			secure_operation
 			;;
 		*)
 			echo "Invalid option. Use 'help' for usage information."

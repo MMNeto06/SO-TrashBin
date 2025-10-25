@@ -20,3 +20,7 @@ empty references:
 auto_cleanup refrence:
  - config file source idea: https://askubuntu.com/questions/743493/best-way-to-read-a-config-file-in-bash
  - date epoch: https://schuchert.github.io/daily%20tech/2021/02/14/SedBreakdown.html?utm (+chatgpt)
+
+secure_operation reference:
+ - read -s: https://www.geeksforgeeks.org/linux-unix/bash-script-read-user-input/
+ - regex explantion: https://stackoverflow.com/questions/48594826/bash-conditional-loop-issue-y-or-y-yes-n-or-n-no
