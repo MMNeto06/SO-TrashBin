@@ -70,6 +70,12 @@ delete_file() {
 	local exit_code=0
 	local this_absolute_path=$(realpath "$0") # absolute path of this script
 
+	if [[ "$#" -lt 1 ]]; then
+		echo "Must indicate at least one file/directory for deletion"
+		echo "Use: $0 delete <file1> <file2> ... <fileN>"
+		exit_code=1
+	fi
+
 	for file_path in "$@"
 	do 
 		echo "Delete function called with: $file_path" >> "$LOG_FILE"
@@ -759,6 +765,7 @@ OPTIONS:
 	config Opens config file for editing
 	quota Checks if recycle bin exceeds quota
 	preview <id> Allows to preview files by id 
+	secure Allows setting a password to protect sensitive operations
 
 EXAMPLES:
 	$0 delete myfile.txt
@@ -770,6 +777,7 @@ EXAMPLES:
 	$0 stats
 	$0 quota
 	$0 preview 1234567890_abc123
+	$0 secure
 
 EOF
 	return 0

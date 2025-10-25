@@ -40,6 +40,7 @@ Estas são as opções disponíveis:
 	- config: Abre o ficheiro de configurações para que possa alterar o seu conteúdo.
 	- quota: Verifica o espaço ocupado pela reciclagem e compara com o máximo permitido. Caso seja exceda o máximo, o utilizador tem a possibilidade de realizar uma limpeza.
 	- preview <file_id>: Mostras as primeiras dez linhas do conteúdo do ficheiro cujo id corresponde a file_id, no caso deste se tratar de um ficheiro de texto. Se for um ficheiro binário, mostra algumas informações. 
+	- secure: Permite ativar e definir uma palavra passe para confirmar operações mais sensíveis, como empty e autoclean
 	
 Exemplos de utilização:
 	./recycle_bin.sh delete testFile: Envia o ficheiro testFile para a reciclagem. 
@@ -58,6 +59,7 @@ Exemplos de utilização:
 	./recycle_bin.sh config: Abre o ficheiro de configuração para ser editado.
 	./recycle_bin.sh quota
 	./recycle_bin.sh preview
+	./recycle_bin.sh secure: Verifica o estado da definição de palavra passe e pergunta ao utilizador se quer fazer alguma alteração a este
 	
 ## Features
 ### Funcionalidades Obrigatórias

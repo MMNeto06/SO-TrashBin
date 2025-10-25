@@ -340,28 +340,244 @@
 ## Error Handling (MIGUEL)
 
 ### Test Case 25: Invalid Command Line Arguments
+**Objective:** Verify that the script handles attempts to execute non existent commands
+
+**Steps:**
+1. Run a non existent command: `./recycle_bin.sh nonexistentcommand abc 123`
+2. Verify that an error message is displayed
+
+**Expected Result:**
+- Error message is displayed
+- Nothing within the directory ~/recycle_bin is changed
+
+**Actual Result:** 
+- Error message is displayed: "Invalid option. Use 'help' for usage information."
+- Nothing in that directpry changes since no other function was called
+
+**Status:** ✅ Pass
+
+**Screenshots:** 
+- Error message: 
+
+![Test image](screenshots/testcase25_error_message.png)
 
 ### Test Case 26: Missing Required Parameters
+**Objective:** Check that the script alerts the user of missing and/or required paramaters
+
+**Steps:**
+1. Run a command that requires a paramater, like delete: `./recycle_bin.sh delete`
+2. Verify that an error message is displayed
+
+**Expected Result:**
+- Error message is displayed
+- User is informed of correct usage
+
+**Actual Result:** 
+- Error message is displayed: "Must indicate at least one file/directory for deletion"
+- User is informed of correct use: "Use: ./recycle_bin.sh delete \<file1\> \<file2\> ... \<fileN\>"
+
+**Status:** ✅ Pass
+
+**Screenshots:** 
+- Error message: 
+
+![Test image](screenshots/testcase26_error_message.png)
 
 ### Test Case 27: Corrupted Metadata File
+TODO - idk how to do this
 
 ### Test Case 28: Insufficient Disk Space
+TODO - idk how to do this
 
 ### Test Case 29: Permission Denied Errors
+**Objective:** Check that the script does not remove files or directories without system permission
+
+**Steps:**
+1. Run (make a test directory): `mkdir .test`
+1. Run (create a test file): `touch ./.test/test`
+2. Run (remove all permissions from the test directory): `chmod 0 ./.test`
+3. Run (try to delete the file with the script): `./recycle_bin.sh delete ./.test/test`
+3. Run (try to delete the directory with the script): `./recycle_bin.sh delete ./.test`
+4. Verify that an error message is displayed either by the system or by the script
+
+**Expected Result:**
+- Error message is displayed by either the system or the script itself
+- File is not moved to the recycle bin
+- Directory is not moved to the recycle bin
+
+**Actual Result:** 
+- Error message is displayed by the script for the file: "Error: File './.test/test' does not exist"
+- Error message is displayed by the system (and a bit of the script) for the directory: 
+<pre>du: impossível ler a pasta &apos;/home/mmneto06/SO/SO-TrashBin/.test&apos;: Permissão recusada
+Moving to recycle bin...
+mv: impossível mover &apos;/home/mmneto06/SO/SO-TrashBin/.test&apos; para &apos;/home/mmneto06/.recycle_bin/files/1761404641_fwybob&apos;: Permissão recusada
+<font color="#C01C28">Error: Permission denied!</font>
+</pre>
+- Recycle bin, test file and test directory remain in their original conditions
+
+**Status:** ✅ Pass
+
+**Screenshots:** 
+- Error messages: 
+
+![Test image](screenshots/testcase29_error_message.png)
 
 ### Test Case 30: Attempting to Delete Recycle Bin Itself
+**Objective:** Check that the script stops user from deleting the recycle bin itself
+
+**Steps:**
+1. Run the command: `./recycle_bin.sh delete ~/.recycle_bin`
+2. Verify that an error message is displayed
+
+**Expected Result:**
+- Error message is displayed
+- Recycle bin is not deleted and stays the same
+
+**Actual Result:** 
+- Error message is displayed: "Error: Cannot delete recycle bin itself."
+- ~/.recycle_bin still exists and is unchanged
+- Log file logs attempt at deleting recycle_bin
+
+**Status:** ✅ Pass
+
+**Screenshots:** 
+- Error message: 
+
+![Test image](screenshots/testcase30_error_message.png)
+
 
 ### Test Case 31: Concurrent Operations
+TODO - wtf does this mean
 
-## Performance Tests (MIGUEL)
+## Performance Tests
 
 ### Test Case 32: Delete 100+ Files
+**Objective:** Check how fast the script can delete 100 files
+
+**Steps:**
+1. Create 100 files, all with the touch command
+2. Delete each one individually
+3. Check how long it took to delete them all
+
+OR
+
+1. Run the auxiliary script testingMdScripts/performance.sh to do the above steps automatically
+
+**Expected Result:**
+- All files created are deleted
+- Script doesn't take a long time to run
+
+**Actual Result:** 
+- Script ran successfully to delete 100 files
+- Time elapsed to delete is always slighly different, but averages at 2 seconds
+- That means that, on average, it takes 0.02 seconds to delete a file
+
+**Status:** ✅ Pass
+
+**Screenshots:** 
+- Testing image: 
+
+![Test image](screenshots/testcase32_performance_test_pt1.png)
+
+...
+
+![Test image](screenshots/testcase32_performance_test_pt2.png)
+- After this, the recycle_bin.sh script is run to empty the recycle bin, and the temporary test directory that held the test files is deleted 
+
 
 ### Test Case 33: List Recycle Bin with 100+ Files
+**Objective:** Check how fast the script can list 100 files
+
+**Steps:**
+1. Create 100 files, all with the touch command
+2. Delete each one individually
+3. Run script with list command
+4. Check how long it took to list them all
+
+OR
+
+1. Run the auxiliary script testingMdScripts/performance.sh to do the above steps automatically
+
+**Expected Result:**
+- All files created are listed
+- Script doesn't take a long time to run
+
+**Actual Result:** 
+- Script runs successfully
+- Time elapsed is always different, but averages at 0.008 seconds
+- That means that, on average, it takes the list command 0.00008 seconsd per file to fully run
+- NOTE: the '--detailed' flag does not change the average time to list
+
+**Status:** ✅ Pass
+
+**Screenshots:** 
+- Testing image: 
+
+![Test image](screenshots/testcase33_performance_test.png)
+
+- After this, the recycle_bin.sh script is run to empty the recycle bin, and the temporary test directory that held the test files is deleted 
+
 
 ### Test Case 34: Search in Large Metadata File
+**Objective:** Check how fast the script can restore a file from the bin with 100 items
+
+**Steps:**
+1. Create 100 files, all with the touch command
+2. Delete each one individually
+3. Run script with the command search 1, for example
+4. Check how long it took to restore the file
+
+OR
+
+1. Run the auxiliary script testingMdScripts/performance.sh to do the above steps automatically
+
+**Expected Result:**
+- The script successfully finds all items with a 1 in it's original name/path
+- Script doesn't take a long time to run
+
+**Actual Result:** 
+- Script runs successfully
+- Time elapsed is always different, depeneds how many items show up. In this case, it took on average 0.3 seconds
+- If we use as the search pattern something that every files has, it takes roughly 2 seconds, the same ammount of time it took to delete all the files
+
+**Status:** ✅ Pass
+
+**Screenshots:** 
+- Testing image: 
+
+![Test image](screenshots/testcase34_performance_test.png)
+
+- After this, the recycle_bin.sh script is run to empty the recycle bin, and the temporary test directory that held the test files is deleted 
 
 ### Test Case 35: Restore from Recycle Bin with Many Items
+**Objective:** Check how fast the script can restore a file from the bin with 100 items
+
+**Steps:**
+1. Create 100 files, all with the touch command
+2. Delete each one individually
+3. Run script with the command restore file_100, to test worst case scenario
+4. Check how long it took to restore the file
+
+OR
+
+1. Run the auxiliary script testingMdScripts/performance.sh to do the above steps automatically
+
+**Expected Result:**
+- The file is successfully restored
+- Script doesn't take a long time to run
+
+**Actual Result:** 
+- Script runs successfully
+- Time elapsed is always different, but averages at 0.2 seconds
+
+**Status:** ✅ Pass
+
+**Screenshots:** 
+- Testing image: 
+
+![Test image](screenshots/testcase35_performance_test.png)
+
+- After this, the recycle_bin.sh script is run to empty the recycle bin, and the temporary test directory that held the test files is deleted 
 
 ## Optional Features Tests (SPLIT)
 
