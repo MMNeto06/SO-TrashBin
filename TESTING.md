@@ -100,7 +100,43 @@
 
 ### Test Case 5: TODO (Delete Directory with Contents (recursive)) -> EU
 
-### Test Case 6: TODO (List Empty Recycle Bin)
+### Test Case 6: List Empty Recycle Bin
+**Objective:** Verify that an empty recycle bin is handled by the script
+
+**Steps:**
+1. Run `./recycle_bin.sh empty`, ensuring an empty bin
+2. Verify that there are no files in recycle bin
+3. Run `./recycle_bin.sh list`
+4. Verify that empty bin message is displayed
+
+**Expected Result:**
+- Recycle bin files folder and metadata are empty
+- Empty bin message is displayed
+
+**Actual Result:** 
+- Files folder is empty
+- Metadata only contains header
+- Empty bin message is displayed:
+
+<pre>=== Recycle Bin Contents ===
+The Recycle Bin is Currently Empty
+</pre>
+
+**Status:** ✅ Pass
+
+**Screenshots:** 
+- Output from terminal:
+
+![Terminal output](screenshots/testcase6_output.png)
+
+- Empty metadata: 
+
+![Empty metadata](screenshots/testcase6_metadata.png)
+
+- Empty files folder: 
+
+![Empty files folder](screenshots/testcase6_files_folder.png)
+
 
 ### Test Case 7: Restore Single File
 **Objective:** Verify that a single file can be restored successfully
@@ -179,7 +215,39 @@
 - List output: 
 ![List output](screenshots/testcase4_list_output.png)
 
-### Test Case 9: TODO (Empty Entire Recycle Bin)
+### Test Case 9: Empty Entire Recycle Bin
+**Objective:** Verify that the script can empty the whole bin at once
+
+**Steps:**
+1. Create some test files with the `touch` command
+2. Delete them with `./recycle_bin.sh delete file1 file2 ...`
+3. Verify that they were moved with `./recycle_bin.sh list`
+4. Empty the whole bin with `./recycle_bon.sh empty`
+5. Verify that files folder is now empty
+6. Verify thar metadata has also been emptied
+7. Run `.recycle_bin.sh list` after to check that it is empty
+
+**Expected Result:**
+- Test files are successfully deleted
+- Files are successfully listed
+- Bin is then successfully emptied
+- Metadata and files folder are now reser
+- Empty bin is successfully shown
+
+**Actual Result:** 
+- Success deletion message is displayed: "File moved as: "
+- All files are listed
+- Bin is emptied
+- Metadata file and files folder have been reset
+- No files are shown to be in the bin
+
+**Status:** ✅ Pass
+
+**Screenshots:** 
+- Terminal output:
+
+![Terminal output](screenshots/testcase9_output.png)
+
 
 ### Test Case 10: Search Existing File
 **Objective:** Verify that a search for an existing file can be done successfully
@@ -581,4 +649,4 @@ OR
 
 ## Optional Features Tests (SPLIT)
 
-### TODO 
+### TODO
