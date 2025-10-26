@@ -6,64 +6,64 @@ Diogo Coelho e Silva (125240)
 
 ## Description
 
-Este projeto consiste no desenvolvimento de uma reciclagem personalizada para sistemas Linux, implementada em Bash, no âmbito da unidade curricular de Sistemas Operativos.
+This project consists on the development of a custom recycling bin for Linux systems, implemented in Bash, for the Sistemas Operativos unit course.
 
-O sistema permite a eliminação segura de ficheiros, armazenando-os numa área de reciclagem acompanhada de um ficheiro de metadados que contém todas as informações relevantes acerca dos ficheiros reciclados. Adicionalmente, inclui um ficheiro de configuração, que pode ser ajustado pelo utilizador, bem como um ficheiro de registo que documenta as operações realizadas.
+This system allows the safe deletion of files, moving them to a recycling area with a metadata file which contains all relevant information about the recycled files. Aditionally, it includes a configuration file, which can be adjusted by the user, as well as a log file wich documents all operations performed.
 
-O utilizador dispõem de diversas funcionalidades, as quais serão descritas detalhadamente ao longo deste documento.
+The user has access to a plethora of features, which will be described with detail through out this document. 
 
 ## Installation
 
-De modo a instalar e configurar o sistema corretamente, é necessário seguir os passos descritos abaixo:
-	1. Descarregar todos os ficheiros do projeto e colocá-los num diretório à sua escolha.
-	2. Abra o seu terminal e certifique-se que se localiza no diretório escolhido anteriormente.
-	3. De modo a confirmar que o programa principal é executável, forneça permissões de execução com o seguinte comando: 
-		chmod +x recycle_bin.sh
-	4. O primeiro comando relativo ao programa a ser executado deve ser *./recycle_bin.sh config*, para poder configurar a sua reciclagem ao seu gosto. É evidente que não é obrigatório que este seja o primeiro comando que executa, contudo, algumas funcionalidades podem resultar em erros caso não o faça. Adicionalmente, este comando irá criar o diretório da reciclagem, para que possa começar a utilizá-la.
+To install and configure the system correctly, it is necessary to follow the steps described below:
+    1. Download all files from the project and place the in the directory of your choice
+    2. Open your terminal and make sure that your current/working directory is the same as the directory chosen in the step above
+    3. To confirm that the main script is executable, give it execution permissions with the following command:
+        chmod +x recycle_bin.sh
+    4. The first command to be executed by the script should be *./recycle_bin.sh config*, to configure the recycle bin to your liking. It should be noted that it is not mandatory that this the first command you execute, however some of the functions will result in error in case you don't do it. Aditionally, this first command will create the recycling directory, so that you may start using it
 
 ## Usage
 [How to use with examples]
-Após a instalação, o sistema pode ser executado através do programa principal: 
+After installing, the system can be run with the main script:
 	./recycle_bin.sh [OPTION] [ARGUMENTS]
 	
-Estas são as opções disponíveis: 
-	- delete <file>: Move o ficheiro para a reciclagem, em vez de o eliminar permanentemente. Note-se que pode passar vários ficheiros como argumento, ou até mesmo diretórios.
-	- list [--detailed]: Lista todos os ficheiros atualmente na reciclagem. A flag --detailed mostra mais informação na listagem
-	- restore <file_name or file_id>: Restora o ficheiro para a sua localização original. 
-	- search <search_pattern>: Procura ficheiros reciclados que correspondem ao padrão indicado.
-	- empty: [--force] [file_name or file_id]: Elimina permanentemente todos os ficheiros da reciclagem após confirmação. 
-	A flag --force salta a confirmação. Opcionalmente pode-se eliminar um ficheiro específico.
-	- help: Mostra uma mensagem de ajuda com todos os comandos disponíveis.
-	- autoclean: Automaticamente elimina permanentemente os itens mais velhos da reciclagem.
-	A 'velhice' de um item é especificado no ficheiro de configurações.
-	- stats: Mostra estatísticas sobre a reciclagem
-	- config: Abre o ficheiro de configurações para que possa alterar o seu conteúdo.
-	- quota: Verifica o espaço ocupado pela reciclagem e compara com o máximo permitido. Caso seja exceda o máximo, o utilizador tem a possibilidade de realizar uma limpeza.
-	- preview <file_id>: Mostras as primeiras dez linhas do conteúdo do ficheiro cujo id corresponde a file_id, no caso deste se tratar de um ficheiro de texto. Se for um ficheiro binário, mostra algumas informações. 
-	- secure: Permite ativar e definir uma palavra passe para confirmar operações mais sensíveis, como empty e autoclean
+These are the available options: 
+    - delete \<file\>: Moves the file to the recycle bin, instead of permanently deleting it. It should be noted that it is possible to pass multiple files as the argument, and directories will be accepted instead of files
+	- list [--detailed]: Lists all files currently in the recycle bin. The --detailed flag shows more information on the listing
+	- restore <file_name or file_id>: Restores the file/directory to it's original location.
+	- search <search_pattern>: Searchs for recycled items that match the given pattern.
+	- empty: [--force] [file_name or file_id]: Permanently eliminates all recycled files after confirmation. 
+	The --force flag will skip confirmation. Optionally it is possible to delete a specific file/directory.
+	- help: Displays a help message with all available commands.
+	- autoclean: Automatically permanently eliminates the oldest items in the bin.
+	The 'oldness' of a file is specifies in the configuration file.
+	- stats: Shows statistics about the recycle bin
+	- config: Opens the configuration file so that it may be edited.
+	- quota: Checks the disk usage of the bin and compares it to the maximum allowed. If it exceeds the maximum, the user can perform a cleanup.
+    - preview <file_id>: Shows the first ten lines of content of the corresponding file to the provided id, if the given file is a text file. If it's a binary file, it shows some information about it.
+	- secure: Allows the enabling and setting of a password as confirmation for more sensitive commands, like empty and autoclean.
 	
-Exemplos de utilização:
-	./recycle_bin.sh delete testFile: Envia o ficheiro testFile para a reciclagem. 
-	./recycle_bin.sh delete testFile1 testFile2 testFile3: Envia os ficheiros testFile1, testFile2 e testFile3 para a reciclagem. 
-	./recycle_bin.sh list: Lista os conteúdos da reciclagem.
-	./recycle_bin.sh list --detailed: Lista os conteúdos da reciclagem com mais detalhe.
-	./recycle_bin.sh restore testFile: Restora o ficheiro testFile, que foi previamente reciclado. 
-	./recycle_bin.sh restore file_id: Restora o ficheiro reciclado cujo id corresponde a file_id. Note-se que file_id é apenas para efeitos de exemplo, ao executar o programa deve utilizar um id verdadeiro.
-	./recycle_bin.sh search *.txt: Lista informações de todos os ficheiros que tenham a extensão .txt.
-	./recycle_bin.sh empty: Esvazia a reciclagem apoś confirmação do utilizador.
-	./recycle_bin.sh empty --force: Esvazia a reciclagem.
-	./recycle_bin.sh empty file_id: Elimina da reciclagem o ficheiro reciclado após confirmação do utilizador
-	./recycle_bin.sh help: Imprime informação de ajuda sobre como utilizar o script.
-	./recycle_bin.sh autoclean: Esvazia automaticamente da reciclagem ficheiros velhos.
-	./recycle_bin.sh stats: Mostra estatísticas sobre a reciclagem.
-	./recycle_bin.sh config: Abre o ficheiro de configuração para ser editado.
-	./recycle_bin.sh quota
-	./recycle_bin.sh preview
-	./recycle_bin.sh secure: Verifica o estado da definição de palavra passe e pergunta ao utilizador se quer fazer alguma alteração a este
+Use examples:
+	./recycle_bin.sh delete testFile: Sends the file testFile to the recycle bin
+	./recycle_bin.sh delete testFile1 testFile2 testFile3: Sends the files testFile1, testFile2 and testFile3 to the recycle bin. 
+	./recycle_bin.sh list: Lists the content of the bin.
+	./recycle_bin.sh list --detailed: Lists the content of the bin with more detail.
+	./recycle_bin.sh restore testFile: Restores the file testFile, which had been previously recycled. 
+	./recycle_bin.sh restore file_id: Restores the file whose id matches file_id. It should be noted that for all examples that include it, file_id is merely to show the example; when executing the program a real id should be used.
+	./recycle_bin.sh search *.txt: Lists information about all the files with the .txt extension
+	./recycle_bin.sh empty: Empties the recycle bin after user confirmation.
+	./recycle_bin.sh empty --force: Empties the recycle bin.
+	./recycle_bin.sh empty file_id: Eliminates from the recycle bin the file with the specified id after user confirmation
+	./recycle_bin.sh help: Prints help information about how to use the script.
+	./recycle_bin.sh autoclean: Automatically eliminates old files from the recycle bin.
+	./recycle_bin.sh stats: Shows statistics about the recycle bin.
+	./recycle_bin.sh config: Opens the configuration file so that it may be edited.
+	./recycle_bin.sh quota: Checks if the recycle bin has exceeded the defined storage quota, with the option to autoclean if so.
+	./recycle_bin.sh preview file_id: Shows the firts 10 lines of the specified file or inforation about it. 
+	./recycle_bin.sh secure: Checks the password status and asks the user if they want to change it.
 	
 ## Features
-### Funcionalidades Obrigatórias
-Foram implementadas as seguintes funcionalidades obrigatórias:
+### Mandatory features
+The following mandatory features were implemented:
 	- initialize_recyclebin();
 	- delete_file();
 	- list_recycled();
@@ -72,27 +72,29 @@ Foram implementadas as seguintes funcionalidades obrigatórias:
 	- empty_recyclebin();
 	- display_help();
 
-### Funcionalidades Opcionais 
-Foram implementadas as seguintes funcionalidades opcionais:
+### Optional features
+The following optional features were implemented:
 	- show_statistics();
 	- auto_cleanup();
 	- check_quota();
 	- preview_file();
+    - secure_operation();
 	
 ## Configuration
 
+To configure your recycle bin, you should always use the following command: ./recycle_bin.sh config
 De modo a configurar a sua reciclagem, deve utilizar o seguinte comando: ./recycle_bin.sh config.
 
 ## Examples
 [Detailed usage examples with screenshots]
 ## Known Issues
 
-Não são conhecidas quaisquer limitações ou bugs no nosso sistema.
+We are unaware of any limitation or bug with our system.
 
 ## References
 
-Para a realização deste projeto, foram efetuadas pesquisas e consultas a diversas fontes de informação, com o objetivo de adquirir o conhecimento necessário sobre comandos e técnicas fundamentais ao seu desenvolvimento.
-As referências consultadas encontram-se listadas abaixo, devidamente associadas às etapas de desenvolvimento em que foram aplicadas (isto é, as funções implementadas).
+To accomplish this project, several searches and queries were made on several sources, with the goal to aquire the necessary knowledge about commands and techniques fundammental to it's development.
+The consulted sources are listed below, duly asscoiated to the development stages in which they were applied (that is, to the implemented features)
 
 delete_file(): 
 
@@ -112,8 +114,7 @@ check_quota():
 
 preview_file():
 
-### Utilização de LLMs e outras notas
-Importa referir que foram utilizados LLMs como ferramenta de apoio à compreensão de conceitos, ao estudo de funcionalidades de comandos identificadas durante a pesquisa e à resolução de erros (debug) ocorridos durante o desenvolvimento.
+### Usage of LLMs and other notes
+It's important to note that LLMs were used as a support tool to comprehend concepts, to study functionalities of commands identifes during research and any debugging that ocurred during the development.
 
-Parte do código apresentado foi também elaborado com base no estudo dos materiais de apoio disponibilizados.
-
+Part of the presented code was also developed based on the available support materials
