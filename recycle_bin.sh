@@ -580,7 +580,7 @@ check_quota(){
         
     if (( recycle_bin_size >= MAX_SIZE_MB )) 
     then 
-        log error both -e "${RED}WARNING: Recycle bin is full!${NC}"
+        log error both "${RED}WARNING: Recycle bin is full!${NC}"
         log info file "Asking user to clear space..."
         echo "Do you want to clear some space in recycle bin? [Y/N]"
         read choice
@@ -592,6 +592,8 @@ check_quota(){
             log info file "User denied" >> "$LOG_FILE"
             return 1
         fi 
+	else
+		log info both "Recycle bin size is valid!"
     fi 
         
     return 0

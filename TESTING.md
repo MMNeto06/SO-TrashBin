@@ -634,7 +634,7 @@ The Recycle Bin is Currently Empty
 ![Restore](screenshots/testcase18_restore.png)
 ![Restore metadata](screenshots/testcase18_restore_metadata.png) 
 
-### Test Case 19: Handle Very Long Filenames (TODO)
+### Test Case 19: Handle Very Long Filenames
 **Objective:** Verify that the script correctly handles files with very long filenames.
 
 **Steps:**
@@ -643,7 +643,7 @@ The Recycle Bin is Currently Empty
 3. Verify file is removed from current directory
 4. Run: `./recycle_bin.sh list`
 5. Verify file appears in recycle bin
-6. Run: `./recycle_bin.sh restore !@#$%^&*()`
+6. Run: `./recycle_bin.sh restore "$(printf 'a%.0s' {1..250})"`
 7. Verify file is back at original directory
 8. Run: `./recycle_bin.sh list`
 9. Verify restored file does not appear in recycle bin
@@ -660,9 +660,9 @@ The Recycle Bin is Currently Empty
 
 **Actual Result:** 
 - Deletion: 
-    - Success message is displayed: "File moved as: 1761483443_1z87aw"
+    - Success message is displayed: "File moved as: 1761497096_evxrgs"
     - File is removed from current directory
-    - Metadata entry is created: "1761483443_1z87aw|file!@#$%^&*()|/home/dsilva/Desktop/SO-TrashBin/file!@#$%^&*()|2025-10-26_12-57-23|0|regular empty file|664|dsilva:dsilva"
+    - Metadata entry is created: "1761497096_evxrgs|aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|/home/dsilva/Desktop/SO-TrashBin/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|2025-10-26_16-44-56|0|regular empty file|664|dsilva:dsilva"
     - File appears in list output
 
 - Restore: 
@@ -675,12 +675,12 @@ The Recycle Bin is Currently Empty
 
 **Screenshots:** 
 - Deletion: 
-![Deletion](screenshots/testcase18_deletion.png)
-![Deletion metadata](screenshots/testcase18_deletion_metadata.png)
+![Deletion](screenshots/testcase19_deletion.png)
+![Deletion metadata](screenshots/testcase19_deletion_metadata.png)
 
 - Restore:
-![Restore](screenshots/testcase18_restore.png)
-![Restore metadata](screenshots/testcase18_restore_metadata.png) 
+![Restore](screenshots/testcase19_restore.png)
+![Restore metadata](screenshots/testcase19_restore_metadata.png) 
 
 ### Test Case 20: Handle Very Large Files 
 **Objective:** Verify that the script correctly handles the deletion and restoration of very large files without errors or data corruption.
@@ -784,40 +784,96 @@ The Recycle Bin is Currently Empty
 **Objective:** Verify files from different directories can be deleted successfully
 
 **Steps:**
-1. Create test file: `touch ~/testFile`
-2. Run: `./recycle_bin.sh delete ~/testFile`
-3. Verify file is removed from current directory
-4. Run: `./recycle_bin.sh list`
-5. Verify file appears in recycle bin
+1. Run (Create test directories): `mkdir -p ~/testDir1` and `mkdir -p ~/testDir2`
+2. Run (Create test files): `touch ~/testDir1/testFile1 ~/testDir2/testFile2`
+3. Run: `./recycle_bin.sh delete ~/testDir1/testFile1 ~/testDir2/testFile2`
+4. Verify files are removed from their current directory
+5. Run: `./recycle_bin.sh list`
+6. Verify files appear in recycle bin
+7. Run: `./recycle_bin.sh restore testFile1`
+8. Run: `./recycle_bin.sh restore testFile2`
+9. Run: `ls ~/testDir1 ~/testDir2`
+10. Verify each file is back at original directory
+11. Run: `./recycle_bin.sh list`
+12. Verify restored files do not appear in recycle bin
 
 **Expected Result:**
 - File is moved to ~/.recycle_bin/files/
 - Metadata entry is created
 - Success message is displayed
 - File appears in list output
+- File is moved to original directory
+- Metadata entry is erased
+- Success message is displayed
+- File does not appear in list output
 
 **Actual Result:** 
-- Success message is displayed: "File moved as: 1761143792_w5fmrh"
-- File is removed from current directory
-- Metadata entry is created: "1761143792_w5fmrh|testFile|/home/dsilva/Desktop/SO-TrashBin/testFile|2025-10-22_15-36-32|4|regular file|664|dsilva:dsilva"
-- File appears in list output
+- Deletion: 
+    - Success message is displayed: "File moved as: 1761495988_9ilhma" and "File moved as: 1761495988_truz4p"
+    - Files are removed from their current directory
+    - Metadata entry is created: "1761495988_9ilhma|testFile1|/home/dsilva/testDir1/testFile1|2025-10-26_16-26-28|0|regular empty file|664|dsilva:dsilva" and "1761495988_truz4p|testFile2|/home/dsilva/testDir2/testFile2|2025-10-26_16-26-28|0|regular empty file|664|dsilva:dsilva"
+    - File appears in list output
+
+- Restore: 
+    - Success messages are displayed: "Restore complete!"
+    - Files are moved to their original directory
+    - Metadata entries are erased
+    - Files do not appear in list output
 
 **Status:** ✅ Pass
 
 **Screenshots:** 
-- Success message displayed:
-![Success message](screenshots/testcase2_file_moved_message.png)
+- Deletion: 
+![Deletion](screenshots/testcase23_deletion.png)
+![Deletion metadata](screenshots/testcase23_deletion_metadata.png)
 
-- Metadata entry: 
-![Metadata entry](screenshots/testcase2_metadata_entry.png)
+- Restore:
+![Restore](screenshots/testcase23_restore.png)
+![Restore metadata](screenshots/testcase23_restore_metadata.png) 
 
-- List output: 
-![List output](screenshots/testcase2_list_output.png)
+- Files back at original path: 
+![Original path](screenshots/testcase23_original_path.png)
+
+### Test Case 24: Restore Files to Read-Only Directories 
+**Objective:** Verify that a file can not be restores to read-only directories
+
+**Steps:**
+1. Run (Create a test directory): `mkdir -p testDir`
+2. Run (Create a test file inside testDir): `touch testDir/testFile`
+3. Run: `./recycle_bin.sh delete testDir/testFile`
+4. Verify file is removed from current directory
+5. Run: `./recycle_bin.sh list`
+6. Verify file appears in recycle bin
+7. Run (Remove writing and execute permissions): `chmod -wx testDir` 
+8. Run: `./recycle_bin.sh restore testFile`
+9. Verify that an error message is displayed
+10. Run: `./recycle_bin.sh list`
+11. Verify file is still in recycle bin
+
+**Expected Result:**
+- Success deletion message is displayed
+- File is removed from current directory
+- Metadata entry is created
+- File appears in list output
+- Error message is displayed
+- File is not restored
 
 
-### Test Case 24: Restore Files to Read-Only Directories (TODO) -> EU 
+**Actual Result:** 
+- Success deletion message is displayed: "File moved as: 1761498050_5hfzm6"
+- File is removed from current directory
+- Metadata entry is created
+- File appears in list output
+- Error message is displayed: "Error: Permission denied!"
+- File is not restored
 
-## Error Handling (MIGUEL)
+**Status:** ✅ Pass
+
+**Screenshots:** 
+- Test image:
+![Test image](screenshots/testcase24_test_image.png)
+
+## Error Handling 
 
 ### Test Case 25: Invalid Command Line Arguments
 **Objective:** Verify that the script handles attempts to execute non existent commands
@@ -1092,7 +1148,7 @@ OR
 
 - After this, the recycle_bin.sh script is run to empty the recycle bin, and the temporary test directory that held the test files is deleted 
 
-## Optional Features Tests (SPLIT)
+## Optional Features Tests
 
 ### Test Case 36: Automatically clean the Recycle Bin
 **Objective:** Verify that the recycle bin will automatically clean old files when prompted to
@@ -1261,4 +1317,93 @@ Autoclean deleted 1 files
 ![Output](screenshots/testcase41_output.png)
 
 
-### TODO
+### Test Case 42: Preview first 10 lines of file
+**Objective:** Verify that a file can be previewed (first 10 lines)
+
+**Steps:**
+1. Run (Create a file): `touch testFile`
+2. Run (Edit file and write at least 10 lines): `nano testFile`
+3. Run: `./recycle_bin.sh delete testFile`
+4. Run: `./recycle_bin.sh preview [file_id]`  
+5. Verify that the first 10 lines of the file are displayed
+
+**Expected Result:**
+- First ten lines of the file are displayed
+
+**Actual Result:** 
+- First ten lines of the file are displayed: (See screenshot)
+
+**Status:** ✅ Pass
+
+**Screenshots:** 
+- Terminal output:
+
+![Output](screenshots/testcase42_output.png)
+
+### Test Case 43: View information of a binary file
+**Objective:** Verify that information of a binary file can be consulted
+
+**Steps:**
+1. Take a random screenshot 
+2. Save it with a desired name, for example, testImage.png
+3. Run: `./recycle_bin.sh delete testImage.png`
+4. Run: `./recycle_bin.sh preview [file_id]`  
+5. Verify that file informations are displayed
+
+**Expected Result:**
+- File informations are displayed
+
+**Actual Result:** 
+- File informations are displayed: (See screenshot)
+
+**Status:** ✅ Pass
+
+**Screenshots:** 
+- Terminal output:
+
+![Output](screenshots/testcase43_output.png)
+
+### Test Case 44: Check recycle bin size is within limits
+**Objective:** Verify that recycle bin size is within limits
+
+**Steps:**
+1. Run: `./recycle_bin.sh quota`
+2. If:
+    - Recycle bin is full: 
+        - Verify that an error message is displayed
+        - Verify that an option to clear some space is displayed 
+    - Recycle bin is not full:
+        - Verify that an information message is displayed
+3. Run: `./recycle_bin.sh list`
+4. Verify that the output matches information displayed on the messages
+
+**Expected Result:**
+- Recycle bin is full: 
+    - Error message is displayed
+    - An option to clear space is displayed
+    - If user agrees, files are eliminated
+
+- Recycle bin is not full: 
+    - Infomation message is displayed
+
+**Actual Result:** 
+- Recycle bin is full: 
+    - Error message is displayed: "WARNING: Recycle bin is full!"
+    - An option to clear space is displayed: "Do you want to clear some space in recycle bin? [Y/N]"    
+    - User agreed, files were eliminated
+
+- Recycle bin is not full: 
+    - Infomation message is displayed: "Recycle bin size is valid!"
+
+**Status:** ✅ Pass
+
+**Screenshots:** 
+- Full Recycle Bin:
+![Full](screenshots/testcase44_full.png)
+
+- Not Full Recycle Bin:
+![Not Full](screenshots/testcase44_not_full.png)
+
+
+
+
