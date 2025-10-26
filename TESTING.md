@@ -732,9 +732,88 @@ The Recycle Bin is Currently Empty
 
 ### Test Case 21: Handle Symbolical Links (TODO) -> EU 
 
-### Test Case 22: Handle Hidden Files (TODO) -> EU 
+### Test Case 22: Handle Hidden Files 
+**Objective:** Verify that the script correctly handles the deletion and restoration of hidden files.
 
-### Test Case 23: Delete Files from Different Directories (TODO) -> EU
+**Steps:**
+1. Run (Create a hidden file): `touch .hiddenFile` 
+2. Run: `./recycle_bin.sh delete .hiddenFile`
+3. Verify file is removed from current directory
+4. Run: `./recycle_bin.sh list`
+5. Verify file appears in recycle bin
+6. Run: `./recycle_bin.sh restore .hiddenFile`
+7. Verify file is back at original directory
+8. Run: `./recycle_bin.sh list`
+9. Verify restored file does not appear in recycle bin
+
+**Expected Result:**
+- File is moved to ~/.recycle_bin/files/
+- Metadata entry is created
+- Success message is displayed
+- File appears in list output
+- File is moved to original directory
+- Metadata entry is erased
+- Success message is displayed
+- File does not appear in list output
+
+**Actual Result:** 
+- Deletion: 
+    - Success message is displayed: "File moved as: 1761494928_6ca2u8"
+    - File is removed from current directory
+    - Metadata entry is created: "1761494928_6ca2u8|.hiddenFile|/home/dsilva/Desktop/SO-TrashBin/.hiddenFile|2025-10-26_16-08-48|0|regular empty file|664|dsilva:dsilva"
+    - File appears in list output
+
+- Restore: 
+    - Success message is displayed: "Restore complete!"
+    - File is moved to original directory
+    - Metadata entry is erased
+    - File does not appear in list output
+
+**Status:** ✅ Pass
+
+**Screenshots:** 
+- Deletion: 
+![Deletion](screenshots/testcase22_deletion.png)
+![Deletion metadata](screenshots/testcase22_deletion_metadata.png)
+
+- Restore:
+![Restore](screenshots/testcase22_restore.png)
+![Restore metadata](screenshots/testcase22_restore_metadata.png) 
+
+### Test Case 23: Delete Files from Different Directories
+**Objective:** Verify files from different directories can be deleted successfully
+
+**Steps:**
+1. Create test file: `touch ~/testFile`
+2. Run: `./recycle_bin.sh delete ~/testFile`
+3. Verify file is removed from current directory
+4. Run: `./recycle_bin.sh list`
+5. Verify file appears in recycle bin
+
+**Expected Result:**
+- File is moved to ~/.recycle_bin/files/
+- Metadata entry is created
+- Success message is displayed
+- File appears in list output
+
+**Actual Result:** 
+- Success message is displayed: "File moved as: 1761143792_w5fmrh"
+- File is removed from current directory
+- Metadata entry is created: "1761143792_w5fmrh|testFile|/home/dsilva/Desktop/SO-TrashBin/testFile|2025-10-22_15-36-32|4|regular file|664|dsilva:dsilva"
+- File appears in list output
+
+**Status:** ✅ Pass
+
+**Screenshots:** 
+- Success message displayed:
+![Success message](screenshots/testcase2_file_moved_message.png)
+
+- Metadata entry: 
+![Metadata entry](screenshots/testcase2_metadata_entry.png)
+
+- List output: 
+![List output](screenshots/testcase2_list_output.png)
+
 
 ### Test Case 24: Restore Files to Read-Only Directories (TODO) -> EU 
 
@@ -788,7 +867,7 @@ The Recycle Bin is Currently Empty
 TODO - idk how to do this
 
 ### Test Case 28: Insufficient Disk Space
-**Objective:** Check that the script does not delte or restore a file that is larger than the available disk space.
+**Objective:** Check that the script does not delete or restore a file that is larger than the available disk space.
 
 **Steps:**
 1. Make a large empty file: `fallocate -l 50G largefile.bin` (50GB is enough for my disk)
