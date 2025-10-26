@@ -194,7 +194,7 @@ list_recycled() {
 		while IFS='|' read -r file_id original_name original_path deletion_date file_size file_type permissions owner; do
 			if [ "$file_id" != "# Recycle Bin Metadata" ]; then
 				if [[ "$file_id" == "ID" ]]; then
-					printf "%-20s %-20s %-40s %-20s %-15s %-23s %-15s %-20s\n" "Id" "Original Name" "Original Path" "Delete Date" "File Size (KB)" "File Type" "Permissions" "Owner"
+					printf "%-20s %-20s %-40s %-20s %-15s %-23s %-15s %-20s\n" "Id" "Original Name" "Original Path" "Delete Date" "File Size" "File Type" "Permissions" "Owner"
 					printf "%-20s %-20s %-40s %-20s %-15s %-23s %-15s %-20s\n" "--------------------" "--------------------" "----------------------------------------" "--------------------" "---------------" "------------------" "--------------" "--------------------"
 				else
 					local size_to_bytes=$(($file_size * 1024))
@@ -210,7 +210,7 @@ list_recycled() {
 		while IFS='|' read -r file_id original_name original_path deletion_date file_size file_type permissions owner; do
 			if [ "$file_id" != "# Recycle Bin Metadata" ]; then
 				if [ "$file_id" == "ID" ]; then
-					printf "%-20s %-20s %-20s %-15s\n" "Id" "Original Name" "Delete Date" "File Size (KB)"
+					printf "%-20s %-20s %-20s %-15s\n" "Id" "Original Name" "Delete Date" "File Size"
 					printf "%-20s %-20s %-20s %-15s\n" "--------------------" "--------------------" "--------------------" "---------------"
 				else
 					local size_to_bytes=$(($file_size * 1024))
