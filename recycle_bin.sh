@@ -198,7 +198,7 @@ list_recycled() {
 					printf "%-20s %-20s %-40s %-20s %-15s %-23s %-15s %-20s\n" "--------------------" "--------------------" "----------------------------------------" "--------------------" "---------------" "------------------" "--------------" "--------------------"
 				else
 					local size_to_bytes=$(($file_size * 1024))
-					local readable_filesize=$( numfmt --to=iec --format="%.3f" $size_to_bytes )
+					local readable_filesize=$( numfmt --to=iec $size_to_bytes )
 					printf "%-20s %-20s %-40s %-20s %-15s %-23s %-15s %-20s\n" "$file_id" "$original_name" "$original_path" "$deletion_date" "$readable_filesize" "$file_type" "$permissions" "$owner"
 					total_items=$(($total_items + 1))
 					total_size=$(($total_size + $file_size))
@@ -214,7 +214,7 @@ list_recycled() {
 					printf "%-20s %-20s %-20s %-15s\n" "--------------------" "--------------------" "--------------------" "---------------"
 				else
 					local size_to_bytes=$(($file_size * 1024))
-					local readable_filesize=$( numfmt --to=iec --format="%.3f" $size_to_bytes )
+					local readable_filesize=$( numfmt --to=iec $size_to_bytes )
 					printf "%-20s %-20s %-20s %-12s\n" "${file_id:0:10}_..." "$original_name" "$deletion_date" "$readable_filesize"
 					total_items=$(($total_items + 1))
 					total_size=$(($total_size + $file_size))
@@ -428,7 +428,7 @@ search_recycled() {
 		 	printf "%-20s %-20s %-40s %-20s %-12s %-23s %-15s %-20s\n" "--------------------" "--------------------" "----------------------------------------" "--------------------" "------------" "------------------" "--------------" "--------------------"
 	      fi
 			local size_to_bytes=$(($file_size * 1024))
-			local readable_filesize=$( numfmt --to=iec --format="%.3f" $size_to_bytes )
+			local readable_filesize=$( numfmt --to=iec $size_to_bytes )
 	      	printf "%-20s %-20s %-40s %-20s %-12s %-23s %-15s %-20s\n" "$file_id" "$original_name" "$original_path" "$deletion_date" "$readable_filesize" "$file_type" "$permissions" "$owner"
 	   fi
         done < <(tail -n +3 "$METADATA_FILE")
@@ -597,10 +597,10 @@ show_statistics(){
 	done < "$METADATA_FILE"
 	
 	local total_size_to_bytes=$(($total_size * 1024))
-	local readable_totalsize=$( numfmt --to=iec --format="%.3f" $total_size_to_bytes )
+	local readable_totalsize=$( numfmt --to=iec $total_size_to_bytes )
 	local avg_file_size=$(( $total_size / $total_items ))
 	local avg_size_to_bytes=$(($avg_file_size * 1024))
-	local readable_avgsize=$( numfmt --to=iec --format="%.3f" $avg_size_to_bytes )
+	local readable_avgsize=$( numfmt --to=iec $avg_size_to_bytes )
 	local recycle_bin_size_mb=$(du -sm "$RECYCLE_BIN_DIR" | awk '{print $1}')
 	local quota_percentage;
 
