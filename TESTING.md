@@ -650,18 +650,51 @@ The Recycle Bin is Currently Empty
 TODO - idk how to do this
 
 ### Test Case 28: Insufficient Disk Space
-TODO - idk how to do this
+**Objective:** Check that the script does not delte or restore a file that is larger than the available disk space.
+
+**Steps:**
+1. Make a large empty file: `fallocate -l 50G largefile.bin` (50GB is enough for my disk)
+2. Make sure it was created: `ll`
+3. Attempt to delete the file with the script: `./recycle_bin.sh delete largefile.bin`
+4. Verify that an error message is displayed for deletion
+5. Remove the other file: `rm largefile.bin`
+6. Create a smalller file and delete it: `fallocate -l 30G largefile30.bin; ./recycle_bin.sh delete largefile30.bin;`
+7. Create another smaller file and delete it: `fallocate -l 10G largefile30.bin; ./recycle_bin.sh delete largefile10.bin;`
+8. Make sure both were moved: `./recycle_bin.sh list`
+9. Attempt to restore the larger one `./recycle_bin.sh restore largefile30.bin`
+10. Verify that an error message is siplayed for restoration 
+
+**Expected Result:**
+- First error message is shown for a file that is too big
+- The 2 smaller files are succesfully deleted
+- Attempting to restore the larger of those 2 shows the second error message
+
+**Actual Result:** 
+- 1st error message is diplayed: "Error: Not enough space available!"
+- Both smaller files are moved to the recycle bin
+- 2nd error message is displayed: "Error: Not enough space available!"
+
+**Status:** ✅ Pass
+
+**Screenshots:** 
+- 1st part - Deletion attempt: 
+
+![Test image](screenshots/testcase28_output_pt1.png)
+
+- 2nd part - Restoration attempt: 
+
+![Test image](screenshots/testcase28_output_pt2.png)
 
 ### Test Case 29: Permission Denied Errors
 **Objective:** Check that the script does not remove files or directories without system permission
 
 **Steps:**
 1. Run (make a test directory): `mkdir .test`
-1. Run (create a test file): `touch ./.test/test`
-2. Run (remove all permissions from the test directory): `chmod 0 ./.test`
-3. Run (try to delete the file with the script): `./recycle_bin.sh delete ./.test/test`
-3. Run (try to delete the directory with the script): `./recycle_bin.sh delete ./.test`
-4. Verify that an error message is displayed either by the system or by the script
+2. Run (create a test file): `touch ./.test/test`
+3. Run (remove all permissions from the test directory): `chmod 0 ./.test`
+4. Run (try to delete the file with the script): `./recycle_bin.sh delete ./.test/test`
+5. Run (try to delete the directory with the script): `./recycle_bin.sh delete ./.test`
+6. Verify that an error message is displayed either by the system or by the script
 
 **Expected Result:**
 - Error message is displayed by either the system or the script itself
@@ -710,7 +743,7 @@ mv: impossível mover &apos;/home/mmneto06/SO/SO-TrashBin/.test&apos; para &apos
 
 
 ### Test Case 31: Concurrent Operations
-TODO - wtf does this mean
+TODO - wtf does this mean - allegedly not needed
 
 ## Performance Tests
 

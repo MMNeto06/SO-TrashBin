@@ -237,10 +237,12 @@ list_recycled() {
 		while IFS='|' read -r file_id original_name original_path deletion_date file_size file_type permissions owner; do
 			if [ "$file_id" != "# Recycle Bin Metadata" ]; then
 				if [[ "$file_id" == "ID" ]]; then
-					printf "%-20s %-20s %-40s %-20s %-15s %-23s %-15s %-20s\n" "Id" "Original Name" "Original Path" "Delete Date" "File Size (KB)" "File Type" "Permissions" "Owner"
+					printf "%-20s %-20s %-40s %-20s %-15s %-23s %-15s %-20s\n" "Id" "Original Name" "Original Path" "Delete Date" "File Size" "File Type" "Permissions" "Owner"
 					printf "%-20s %-20s %-40s %-20s %-15s %-23s %-15s %-20s\n" "--------------------" "--------------------" "----------------------------------------" "--------------------" "---------------" "------------------" "--------------" "--------------------"
 				else
-					printf "%-20s %-20s %-40s %-20s %-15s %-23s %-15s %-20s\n" "$file_id" "$original_name" "$original_path" "$deletion_date" "$file_size" "$file_type" "$permissions" "$owner"
+					local size_to_bytes=$(($file_size * 1024))
+					local readable_filesize=$( numfmt --to=iec $size_to_bytes )
+					printf "%-20s %-20s %-40s %-20s %-15s %-23s %-15s %-20s\n" "$file_id" "$original_name" "$original_path" "$deletion_date" "$readable_filesize" "$file_type" "$permissions" "$owner"
 					total_items=$(($total_items + 1))
 					total_size=$(($total_size + $file_size))
 				fi
@@ -251,10 +253,12 @@ list_recycled() {
 		while IFS='|' read -r file_id original_name original_path deletion_date file_size file_type permissions owner; do
 			if [ "$file_id" != "# Recycle Bin Metadata" ]; then
 				if [ "$file_id" == "ID" ]; then
-					printf "%-20s %-20s %-20s %-15s\n" "Id" "Original Name" "Delete Date" "File Size (KB)"
+					printf "%-20s %-20s %-20s %-15s\n" "Id" "Original Name" "Delete Date" "File Size"
 					printf "%-20s %-20s %-20s %-15s\n" "--------------------" "--------------------" "--------------------" "---------------"
 				else
-					printf "%-20s %-20s %-20s %-12s\n" "${file_id:0:10}_..." "$original_name" "$deletion_date" "$file_size"
+					local size_to_bytes=$(($file_size * 1024))
+					local readable_filesize=$( numfmt --to=iec $size_to_bytes )
+					printf "%-20s %-20s %-20s %-12s\n" "${file_id:0:10}_..." "$original_name" "$deletion_date" "$readable_filesize"
 					total_items=$(($total_items + 1))
 					total_size=$(($total_size + $file_size))
 				fi
@@ -445,18 +449,19 @@ search_recycled() {
 	
 	while IFS='|' read -r file_id original_name original_path deletion_date file_size file_type permissions owner
 	do
-	   	if echo "$original_name" | grep -iqE "$safe_pattern" || echo "$original_path" | grep -iqE "$safe_pattern" 
-	   	then 
-			matches_found=$(($matches_found+1))
-			if (( matches_found == 1 ))
-			then 
-				printf "%-20s %-20s %-40s %-20s %-12s %-23s %-15s %-20s\n" "Id" "Original Name" "Original Path" "Delete Date" "File Size" "File Type" "Permissions" "Owner"
-				printf "%-20s %-20s %-40s %-20s %-12s %-23s %-15s %-20s\n" "--------------------" "--------------------" "----------------------------------------" "--------------------" "------------" "------------------" "--------------" "--------------------"
-			fi
-
-			printf "%-20s %-20s %-40s %-20s %-12s %-23s %-15s %-20s\n" "$file_id" "$original_name" "$original_path" "$deletion_date" "$file_size" "$file_type" "$permissions" "$owner"
-	   	fi
-    done < <(tail -n +3 "$METADATA_FILE")
+	   if echo "$original_name" | grep -iqE "$safe_pattern" || echo "$original_path" | grep -iqE "$safe_pattern" 
+	   then 
+	      matches_found=$(($matches_found+1))
+	      if (( matches_found == 1 ))
+	      then 
+	        printf "%-20s %-20s %-40s %-20s %-12s %-23s %-15s %-20s\n" "Id" "Original Name" "Original Path" "Delete Date" "File Size" "File Type" "Permissions" "Owner"
+		 	printf "%-20s %-20s %-40s %-20s %-12s %-23s %-15s %-20s\n" "--------------------" "--------------------" "----------------------------------------" "--------------------" "------------" "------------------" "--------------" "--------------------"
+	      fi
+			local size_to_bytes=$(($file_size * 1024))
+			local readable_filesize=$( numfmt --to=iec $size_to_bytes )
+	      	printf "%-20s %-20s %-40s %-20s %-12s %-23s %-15s %-20s\n" "$file_id" "$original_name" "$original_path" "$deletion_date" "$readable_filesize" "$file_type" "$permissions" "$owner"
+	   fi
+        done < <(tail -n +3 "$METADATA_FILE")
 	
 	
 	if (( matches_found == 0 ))
@@ -614,15 +619,19 @@ show_statistics(){
 			fi
 		fi
 	done < "$METADATA_FILE"
-
-	local avg_file_size=$(echo "scale=3; $total_size / $total_items" | bc -l) #source - aula03e07.sh
+	
+	local total_size_to_bytes=$(($total_size * 1024))
+	local readable_totalsize=$( numfmt --to=iec $total_size_to_bytes )
+	local avg_file_size=$(( $total_size / $total_items ))
+	local avg_size_to_bytes=$(($avg_file_size * 1024))
+	local readable_avgsize=$( numfmt --to=iec $avg_size_to_bytes )
 	local recycle_bin_size_mb=$(du -sm "$RECYCLE_BIN_DIR" | awk '{print $1}')
 	local quota_percentage;
 
 	echo "=== Statistics ==="
 	echo "Total number of items: $total_items"
 	if [[ $MAX_SIZE_MB -eq -1 ]]; then
-		echo "Total size of bin: $total_size"
+		echo "Total size of bin: $readable_totalsize"
 	else
 		quota_percentage=$(echo "scale=3; $recycle_bin_size_mb / $MAX_SIZE_MB" | bc -l)
 		echo "Storage used: $quota_percentage %"
@@ -631,12 +640,12 @@ show_statistics(){
 	echo "Number of directories in bin: $n_dir"
 	echo "Oldest item in bin: $oldest_file"
 	echo "Newest item in bin: $newest_file"
-	echo "Average size of item: $avg_file_size KB" #TODO: CONFIRMAR QUE É TAMANHO MÉDIO DE ITEM E NÃO FICHEIROS
+	echo "Average size of item: $readable_avgsize"
 
 	echo "=== Statistics ===" >> $LOG_FILE
 	echo "Total number of items: $total_items" >> $LOG_FILE
 	if [[ $MAX_SIZE_MB -eq -1 ]]; then
-		echo "Total size of bin: $total_size" >> $LOG_FILE
+		echo "Total size of bin: $readable_totalsize" >> $LOG_FILE
 	else
 		echo "Storage used: $quota_percentage %" >> $LOG_FILE
 	fi
@@ -644,7 +653,7 @@ show_statistics(){
 	echo "Number of directories in bin: $n_dir" >> $LOG_FILE
 	echo "Oldest item in bin: $oldest_file" >> $LOG_FILE
 	echo "Newest item in bin: $newest_file" >> $LOG_FILE
-	echo "Average size of item: $avg_file_size KB" >> $LOG_FILE #TODO: CONFIRMAR QUE É TAMANHO MÉDIO DE ITEM E NÃO FICHEIROS
+	echo "Average size of item: $readable_avgsize" >> $LOG_FILE
 	return 0
 
 }

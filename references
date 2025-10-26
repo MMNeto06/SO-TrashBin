@@ -11,6 +11,7 @@ search_recycled references:
 
 list references:
  - read line by line: https://stackoverflow.com/questions/10929453/read-a-file-line-by-line-assigning-the-value-to-a-variable
+ - readable file size (used in stats and searach too): https://stackoverflow.com/questions/15854332/file-size-in-human-readable-format
 
 empty references:
  - confirmation: https://stackoverflow.com/questions/18544359/how-do-i-read-user-input-into-a-variable-in-bash
