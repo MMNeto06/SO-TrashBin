@@ -406,6 +406,11 @@ empty_recyclebin() {
 	if [[ "$1" == "--force" || "$2" == "--force" ]]; then
 		force=0
 	fi
+
+	if [[ -z $( ls -A "$FILES_DIR" ) ]]; then
+		echo "The Recycle Bin is Currently Empty"
+		return 0
+	fi
 	
 	if [ $force -eq 1 ]; then
 		read -p "Continue? (Y/N): " confirm && [[ $confirm == [yY] || $confirm == [yY][eE][sS] ]] || exit 1
@@ -431,11 +436,6 @@ empty_recyclebin() {
 		done < "$METADATA_FILE"
 		log error both "${RED}Error: file name or id not found${NC}"
 	else
-		if [[ -z $( ls -A "$FILES_DIR" ) ]]; then
-			echo "The Recycle Bin is Currently Empty"
-			return 0
-		fi
-
 		log info both "The following files will be deleted"
 		list_recycled
 		list_recycled >> $LOG_FILE
