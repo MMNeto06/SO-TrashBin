@@ -123,6 +123,17 @@ delete_file() {
 		exit_code=1
 	fi
 
+	source "$CONFIG_FILE"
+	
+	if [[ $MAX_SIZE_MB -eq -1 ]] 
+	then 
+		log info both "Max_Size is not configured."
+		nano $CONFIG_FILE
+		return 1
+    fi 
+
+	local max_size_kb=$((MAX_SIZE_MB * 1024))
+
 	for file_path in "$@"
 	do 
 		log info file "Delete function called with: $file_path"
@@ -177,9 +188,9 @@ delete_file() {
 		log info file "Metadata successfully fetched!"
 		
 		log info file "Checking disk space..."
-		local available_disk_space=$(df -k "$FILES_DIR" | tail -1 | awk '{print $4}')
+		local current_bin_size=$(du -sk "$RECYCLE_BIN_DIR" | awk '{print $1}')
 			 
-		if (( file_size > available_disk_space ))
+		if (( file_size+current_bin_size >  max_size_kb ))
 		then 
 		   log error both "${RED}Error: Not enough space available!${NC}"
 		   exit_code=1
@@ -193,7 +204,7 @@ delete_file() {
 		
 		log info both "Moving to recycle bin..."
 
-		mv "$original_absolute_path" "$FILES_DIR/$file_unique_id" || 
+		mv "$original_absolute_path" "$FILES_DIR/$file_unique_id" 2>/dev/null || 
 		{
 		   log error both "${RED}Error: Permission denied!${NC}"
 		   exit_code=1
@@ -347,7 +358,7 @@ restore_file() {
 				fi
 				
 				log info file "Moving file..." 
-				mv "$FILES_DIR/$file_id" "$original_dir/$restore_name" || 
+				mv "$FILES_DIR/$file_id" "$original_dir/$restore_name" 2>/dev/null || 
 				{
 					log error both "${RED}Error: Permission denied!${NC}" 
 					return 1
@@ -542,7 +553,7 @@ check_quota(){
 	then 
 		log info both "Max_Size is not configured."
 		nano $CONFIG_FILE
-		return 0
+		return 1
     fi 
         
     log info file "MAX_SIZE_MB = $MAX_SIZE_MB"

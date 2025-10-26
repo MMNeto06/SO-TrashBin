@@ -25,3 +25,10 @@ auto_cleanup refrence:
 secure_operation reference:
  - read -s: https://www.geeksforgeeks.org/linux-unix/bash-script-read-user-input/
  - regex explantion: https://stackoverflow.com/questions/48594826/bash-conditional-loop-issue-y-or-y-yes-n-or-n-no
+ 
+ 
+ create a large file:
+ https://stackoverflow.com/questions/257844/quickly-create-a-large-file-on-a-linux-system
+ 
+ silence mv: 
+https://unix.stackexchange.com/questions/87605/is-there-a-way-to-make-mv-fail-silently

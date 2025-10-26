@@ -563,9 +563,9 @@ The Recycle Bin is Currently Empty
 
 **Actual Result:** 
 - Deletion: 
-    - Success message is displayed: "File moved as: 1761143792_w5fmrh"
+    - Success message is displayed: "File moved as: 1761480507_74bsjb"
     - File is removed from current directory
-    - Metadata entry is created: "1761143792_w5fmrh|testFile|/home/dsilva/Desktop/SO-TrashBin/testFile|2025-10-22_15-36-32|4|regular file|664|dsilva:dsilva"
+    - Metadata entry is created: "1761480507_74bsjb|file name with spaces|/home/dsilva/Desktop/SO-TrashBin/file name with spaces|2025-10-26_12-10-24|0|regular empty file|664|dsilva:dsilva"
     - File appears in list output
 
 - Restore: 
@@ -586,11 +586,149 @@ The Recycle Bin is Currently Empty
 ![Restore metadata](screenshots/testcase17_restore_metadata.png) 
 ![Restore list output](screenshots/testcase17_restore_list_output.png)
 
-### Test Case 18: Handle Filenames with Special Characters (TODO) -> EU 
+### Test Case 18: Handle Filenames with Special Characters
+**Objective:** Verify that the script correctly handles file operations (delete, list, restore) when filenames contain special characters.
 
-### Test Case 19: Handle Very Long Filenames (TODO) -> EU
+**Steps:**
+1. Run (Create a new file): `touch 'file@#$%^&*()'` 
+2. Run: `./recycle_bin.sh delete 'file@#$%^&*()'`
+3. Verify file is removed from current directory
+4. Run: `./recycle_bin.sh list`
+5. Verify file appears in recycle bin
+6. Run: `./recycle_bin.sh restore 'file@#$%^&*()'`
+7. Verify file is back at original directory
+8. Run: `./recycle_bin.sh list`
+9. Verify restored file does not appear in recycle bin
 
-### Test Case 20: Handle Very Large Files (TODO) -> EU 
+**Expected Result:**
+- File is moved to ~/.recycle_bin/files/
+- Metadata entry is created
+- Success message is displayed
+- File appears in list output
+- File is moved to original directory
+- Metadata entry is erased
+- Success message is displayed
+- File does not appear in list output
+
+**Actual Result:** 
+- Deletion: 
+    - Success message is displayed: "File moved as: 1761483443_1z87aw"
+    - File is removed from current directory
+    - Metadata entry is created: "1761483443_1z87aw|file!@#$%^&*()|/home/dsilva/Desktop/SO-TrashBin/file!@#$%^&*()|2025-10-26_12-57-23|0|regular empty file|664|dsilva:dsilva"
+    - File appears in list output
+
+- Restore: 
+    - Success message is displayed: "Restore complete!"
+    - File is moved to original directory
+    - Metadata entry is erased
+    - File does not appear in list output
+
+**Status:** ✅ Pass
+
+**Screenshots:** 
+- Deletion: 
+![Deletion](screenshots/testcase18_deletion.png)
+![Deletion metadata](screenshots/testcase18_deletion_metadata.png)
+
+- Restore:
+![Restore](screenshots/testcase18_restore.png)
+![Restore metadata](screenshots/testcase18_restore_metadata.png) 
+
+### Test Case 19: Handle Very Long Filenames (TODO)
+**Objective:** Verify that the script correctly handles files with very long filenames.
+
+**Steps:**
+1. Run (Create a new file): `touch "$(printf 'a%.0s' {1..250})"` 
+2. Run: `./recycle_bin.sh delete "$(printf 'a%.0s' {1..250})"`
+3. Verify file is removed from current directory
+4. Run: `./recycle_bin.sh list`
+5. Verify file appears in recycle bin
+6. Run: `./recycle_bin.sh restore !@#$%^&*()`
+7. Verify file is back at original directory
+8. Run: `./recycle_bin.sh list`
+9. Verify restored file does not appear in recycle bin
+
+**Expected Result:**
+- File is moved to ~/.recycle_bin/files/
+- Metadata entry is created
+- Success message is displayed
+- File appears in list output
+- File is moved to original directory
+- Metadata entry is erased
+- Success message is displayed
+- File does not appear in list output
+
+**Actual Result:** 
+- Deletion: 
+    - Success message is displayed: "File moved as: 1761483443_1z87aw"
+    - File is removed from current directory
+    - Metadata entry is created: "1761483443_1z87aw|file!@#$%^&*()|/home/dsilva/Desktop/SO-TrashBin/file!@#$%^&*()|2025-10-26_12-57-23|0|regular empty file|664|dsilva:dsilva"
+    - File appears in list output
+
+- Restore: 
+    - Success message is displayed: "Restore complete!"
+    - File is moved to original directory
+    - Metadata entry is erased
+    - File does not appear in list output
+
+**Status:** ✅ Pass
+
+**Screenshots:** 
+- Deletion: 
+![Deletion](screenshots/testcase18_deletion.png)
+![Deletion metadata](screenshots/testcase18_deletion_metadata.png)
+
+- Restore:
+![Restore](screenshots/testcase18_restore.png)
+![Restore metadata](screenshots/testcase18_restore_metadata.png) 
+
+### Test Case 20: Handle Very Large Files 
+**Objective:** Verify that the script correctly handles the deletion and restoration of very large files without errors or data corruption.
+
+**Steps:**
+1. Run (Create a large file): `fallocate -l 150M largeTestFile`; reference: https://stackoverflow.com/questions/257844/quickly-create-a-large-file-on-a-linux-system
+2. Run: `./recycle_bin.sh delete largeTestFile`
+3. Verify file is removed from current directory
+4. Run: `./recycle_bin.sh list`
+5. Verify file appears in recycle bin
+6. Run: `./recycle_bin.sh restore largeTestFile`
+7. Verify file is back at original directory
+8. Run: `./recycle_bin.sh list`
+9. Verify restored file does not appear in recycle bin
+
+**Expected Result:**
+- File is moved to ~/.recycle_bin/files/
+- Metadata entry is created
+- Success message is displayed
+- File appears in list output
+- File is moved to original directory
+- Metadata entry is erased
+- Success message is displayed
+- File does not appear in list output
+
+**Actual Result:** 
+- Deletion: 
+    - Success message is displayed: "File moved as: 1761485312_8exqzv"
+    - File is removed from current directory
+    - Metadata entry is created: "1761485312_8exqzv|largeTestFile|/home/dsilva/Desktop/SO-TrashBin/largeTestFile|2025-10-26_13-28-32|153600|regular file|664|dsilva:dsilva"
+    - File appears in list output
+
+- Restore: 
+    - Success message is displayed: "Restore complete!"
+    - File is moved to original directory
+    - Metadata entry is erased
+    - File does not appear in list output
+
+**Status:** ✅ Pass
+
+**Screenshots:** 
+- Deletion: 
+![Deletion](screenshots/testcase20_deletion.png)
+![Deletion metadata](screenshots/testcase20_deletion_metadata.png)
+
+- Restore:
+![Restore](screenshots/testcase20_restore.png)
+![Restore metadata](screenshots/testcase20_restore_metadata.png) 
 
 ### Test Case 21: Handle Symbolical Links (TODO) -> EU 
 
