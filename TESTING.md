@@ -369,7 +369,7 @@ The Recycle Bin is Currently Empty
 - Error message: 
 ![Error message](screenshots/testcase11_error_message.png)
 
-### Test Case 12: Display Help Information (Vai faltar print, falta completar a função)
+### Test Case 12: Display Help Information
 **Objective:** Verify that help information is displayed successfully
 
 **Steps:**
@@ -384,9 +384,9 @@ The Recycle Bin is Currently Empty
 
 **Status:** ✅ Pass
 
-**Screenshots:** FALTA ISTO
+**Screenshots:** 
 - Help message: 
-![Help message](screenshots/testcase11_error_message.png)
+![Help message](screenshots/testcase12_help_message.png)
 
 ## Edge Cases 
 
@@ -409,19 +409,17 @@ The Recycle Bin is Currently Empty
 - Error message: 
 ![Error message](screenshots/testcase13_error_message.png)
 
-### Test Case 14: Delete File Without Permissions (TODO) -> EU 
+### Test Case 14: Delete File Without Permissions 
 **Objective:** Verify that the script handles attempts to delete a file without sufficient permissions correctly.
 
-**WARNING**: This test case requires superuser permissions (sudo). Use caution, as incorrect execution of privileged commands may affect system stability.
-
 **Steps:**
-1. Run (Create a file on a protected directory): `sudo touch /protectedFile`
-2. Run: `./recycle_bin.sh delete /protectedFile`
-3. Verify that an error message is displayed
-4. Verify that the file was not moved from it's current directory
-5. Run: `./recycle_bin.sh list`
-6. Verify that the file does not appear on the list
-7. (Optional) Remove the test file: `sudo rm /protectedFile`
+1. Run (Create a file on a protected directory): `touch protectedFile`
+2. Run (Remove permissions): `chmod 000 protectedFile`
+3. Run: `./recycle_bin.sh delete /protectedFile`
+4. Verify that an error message is displayed
+5. Verify that the file was not moved from it's current directory
+6. Run: `./recycle_bin.sh list`
+7. Verify that the file does not appear on the list
 
 **Expected Result:**
 - Error message is displayed
@@ -435,41 +433,158 @@ The Recycle Bin is Currently Empty
 
 **Status:** ✅ Pass
 
-**Screenshots:** FALTA ISTO AQUI 
-- Test image: 
-![Test image](screenshots/testcase14_test_image.png)
-
-### Test Case 15: Restore when Original Location has same Filename (TODO) -> EU
-**Objective:** Verify that the script handles attempts to delete a file without sufficient permissions correctly.
-
-**Pre-condition:** File must already exist in recycle bin (follow Test Case 2: Delete Single File) and there should be a file, with the same name as the deleted one, in the restoring directory.
-
-**Steps:**
-1. Run (Create a new file): `touch protectedFile`
-2. Run (Change permissions): `chmod 000 protectedFile`
-3. Run: `./recycle_bin.sh delete protectedFile`
-4. Verify that an error message is displayed
-5. Verify that the file was not moved from it's current directory
-6. Run: `./recycle_bin.sh list`
-7. Verify that the file does not appear on the list
-
-**Expected Result:**
-- Error message is displayed
-- File is not moved
-- File does not appear on recycle bin files list
-
-**Actual Result:** 
-- Error message is displayed: "Error: File 'nonExistentFile' does not exist"
-
-**Status:** ✅ Pass
-
 **Screenshots:** 
 - Test image: 
 ![Test image](screenshots/testcase14_test_image.png)
 
-### Test Case 16: Restore with Non-Existent File Id (TODO) -> EU 
+- List output: 
+![List output](screenshots/testcase14_list_output.png)
 
-### Test Case 17: Handle Filenames with Spaces (TODO) -> EU 
+### Test Case 15: Restore when Original Location has same Filename
+**Objective:** Verify that the script handles attempts to restore a file, when 
+
+**Pre-condition:** File must already exist in recycle bin (follow Test Case 2: Delete Single File) and there should be a file, with the same name as the deleted one, in the restoring directory.
+
+**Steps:**
+1. Run: `./recycle_bin.sh restore duplicateTestFile`
+2. Verify that a message informing that there is a file with the same name at original path is displayed
+3. Verify that an option list is displayed
+4. Select the desired option:
+
+    4.1. Overwrite:
+    - Verify that a success message is displayed
+    - Run: `./recycle_bin.sh list`
+    - Verify that the file does not appear on recycle bin files list
+
+    4.2. Restore with modified name: 
+    - Verify that a success message is displayed
+    - Run: `./recycle_bin.sh list`
+    - Verify that the file does not appear on recycle bin files list
+    - Verify that the file in on its original directory, with a modified name
+
+    4.3. Cancel operation: 
+    - Verify that a message informing operation cancelation is displayed
+    - Run: `./recycle_bin.sh list`
+    - Verify that the file still appears on recycle bin files list
+
+**Expected Result:**
+- Informing message is displayed
+- Option list is displayed
+- Overwrite: 
+    - Success message is displayed
+    - File does not appear on recycle bin files list
+- Restore with modified name: 
+    - Success message is displayed
+    - File does not appear on recycle bin files list
+    - File in on its original directory, with a modified name
+- Cancel operation: 
+    - Informing message is displayed
+    - File still appears on recycle bin files list
+
+**Actual Result:** 
+- Informing message is displayed: "This file already exists at original path!"
+- Option list is displayed: 
+    1) Overwrite
+    2) Restore with modified name
+    3) Cancel operation
+- Overwrite:
+    - Success message is displayed: "Restore complete!"
+    - File does not appear on recycle bin files list
+- Restore with modified name: 
+    - Success message is displayed: "Restore complete!"
+    - File does not appear on recycle bin files list
+    - File in on its original directory, with a modified name (originalname_timestamp)
+- Cancel operation: 
+    - Informing message is displayed: "Cancelling restore."
+    - File still appears on recycle bin files list
+
+**Status:** ✅ Pass
+
+**Screenshots:** 
+- Overwrite: 
+
+![Overwrite option](screenshots/testcase15_overwrite_option.png)
+![Overwrite list](screenshots/testcase15_overwrite_list.png)
+
+- Restore: 
+
+![Restore option](screenshots/testcase15_restore_option.png)
+![Restore list](screenshots/testcase15_restore_list.png)
+
+![Restore file name](screenshots/testcase15_restore_file_name.png)
+
+- Cancel operation: 
+
+![Cancel option](screenshots/testcase15_cancel_option.png)
+![Cancel list](screenshots/testcase15_cancel_list.png)
+
+### Test Case 16: Restore with Non-Existent File Id
+**Objective:** Verify that the script handles attempts to restore a non-existent id correctly.
+
+**Steps:**
+1. Run: `./recycle_bin.sh restore 12345fake_id`
+2. Verify that an error message is displayed
+
+**Expected Result:**
+- Error message is displayed
+
+**Actual Result:** 
+- Error message is displayed: "No match was found for file: 12345fake_id"
+
+**Status:** ✅ Pass
+
+**Screenshots:** 
+- Error message: 
+![Error message](screenshots/testcase15_error_message.png)
+
+### Test Case 17: Handle Filenames with Spaces 
+**Objective:** Verify that the script correctly handles file operations (delete, list, restore) when filenames contain spaces.
+
+**Steps:**
+1. Run (Create a new file): `touch "file name with spaces"` 
+2. Run: `./recycle_bin.sh delete "file name with spaces"`
+3. Verify file is removed from current directory
+4. Run: `./recycle_bin.sh list`
+5. Verify file appears in recycle bin
+6. Run: `./recycle_bin.sh restore "file name with spaces"`
+7. Verify file is back at original directory
+8. Run: `./recycle_bin.sh list`
+9. Verify restored file does not appear in recycle bin
+
+**Expected Result:**
+- File is moved to ~/.recycle_bin/files/
+- Metadata entry is created
+- Success message is displayed
+- File appears in list output
+- File is moved to original directory
+- Metadata entry is erased
+- Success message is displayed
+- File does not appear in list output
+
+**Actual Result:** 
+- Deletion: 
+    - Success message is displayed: "File moved as: 1761143792_w5fmrh"
+    - File is removed from current directory
+    - Metadata entry is created: "1761143792_w5fmrh|testFile|/home/dsilva/Desktop/SO-TrashBin/testFile|2025-10-22_15-36-32|4|regular file|664|dsilva:dsilva"
+    - File appears in list output
+
+- Restore: 
+    - Success message is displayed: "Restore complete!"
+    - File is moved to original directory
+    - Metadata entry is erased
+    - File does not appear in list output
+
+**Status:** ✅ Pass
+
+**Screenshots:** 
+- Deletion: 
+![Deletion](screenshots/testcase17_deletion.png)
+![Deletion metadata](screenshots/testcase17_deletion_metadata.png)
+
+- Restore:
+![Restore](screenshots/testcase17_restore.png)
+![Restore metadata](screenshots/testcase17_restore_metadata.png) 
+![Restore list output](screenshots/testcase17_restore_list_output.png)
 
 ### Test Case 18: Handle Filenames with Special Characters (TODO) -> EU 
 

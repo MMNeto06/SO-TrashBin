@@ -60,6 +60,53 @@ generate_unique_id() {
 	echo "${timestamp}_${random}"
 }
 
+#########################################################################
+# Function: log
+# Description: Writes important information to log file and/or terminal
+# Parameters: $1 - message type (info, error)
+#			  $2 - where to write (terminal, file or both)
+#			  $3 - information to write
+# Returns: 0 on success, 1 on failure
+#########################################################################
+log(){
+	local info_type="$1"
+	local writing_place="$2"
+	local message_to_write="$3"
+	local echo_type="echo"
+
+	if [[ "$info_type" == "error" ]]
+	then
+		echo_type="echo -e"
+	fi
+
+    case "$writing_place" in
+        terminal)
+            $echo_type "$message_to_write"
+            ;;
+        file)
+            if [[ -z "$LOG_FILE" ]]; then
+				echo -e "${RED}Error: LOG_FILE not defined.${NC}"
+                return 1
+            fi
+            $echo_type "$message_to_write" >> "$LOG_FILE"
+            ;;
+        both)
+            $echo_type "$message_to_write"
+            if [[ -z "$LOG_FILE" ]]; then
+                echo -e "${RED}Error: LOG_FILE not defined.${NC}"
+                return 1
+            fi
+            $echo_type "$message_to_write" >> "$LOG_FILE"
+            ;;
+        *)
+            echo -e "${RED}Error: Invalid writing place.${NC}"
+            return 1
+            ;;
+    esac
+
+	return 0
+}
+
 #################################################
 # Function: delete_file
 # Description: Moves file/directory to recycle bin
@@ -78,26 +125,29 @@ delete_file() {
 
 	for file_path in "$@"
 	do 
-		echo "Delete function called with: $file_path" >> "$LOG_FILE"
+		log info file "Delete function called with: $file_path"
 		
 		# Validate input
 		if [ -z "$file_path" ]; then
-		echo -e "${RED}Error: No file specified${NC}"
-		echo -e "${RED}Error: No file specified${NC}" >> "$LOG_FILE"
+		log error both "${RED}Error: No file specified${NC}"
 		exit_code=1
 		continue
 		fi
 		
 		# Check if file exists
 		if [ ! -e "$file_path" ]; then
-		echo -e "${RED}Error: File '$file_path' does not exist${NC}"
-		echo -e "${RED}Error: File '$file_path' does not exist${NC}" >> "$LOG_FILE"
+		log error both "${RED}Error: File '$file_path' does not exist${NC}"
 		exit_code=1
 		continue
 		fi
+
+		# Check file permissions
+		if [ ! -r "$file_path" ] || [ ! -w "$file_path" ]; then
+			log error both "${RED}Error: Permission denied!${NC}"
+			return 1
+		fi
 		
-			
-		echo "Fetching metadata..." >> "$LOG_FILE"
+		log info file "Fetching metadata..." 
 		
 		local original_file_name=$(basename "$file_path")
 		local original_absolute_path=$(realpath "$file_path")
@@ -105,18 +155,15 @@ delete_file() {
 		
 		if [[ "$original_absolute_path" == "$this_absolute_path" ]] 
 		then 
-			echo -e "${RED}Error: Cannot delete main script.${NC}"
-			echo -e "${RED}Error: Cannot delete main script${NC}" >> "$LOG_FILE"
+			log error both "${RED}Error: Cannot delete main script.${NC}"
 			exit_code=1
 			continue
 		fi
 		
-		
 		# Check if deletion directory is not recycle bin itself
 		if [[ "$original_absolute_path" == "$RECYCLE_BIN_DIR" || "$original_dir" == "$RECYCLE_BIN_DIR" ]]
 		then 
-		   echo -e "${RED}Error: Cannot delete recycle bin itself.${NC}"
-		   echo -e "${RED}Error: Cannot delete recycle bin itself.${NC}" >> "$LOG_FILE"
+		   log error both "${RED}Error: Cannot delete recycle bin itself.${NC}"
 		   exit_code=1
 		   continue
 		fi 
@@ -127,43 +174,39 @@ delete_file() {
 		local original_permissions=$(stat -c %a "$original_absolute_path")
 		local original_owner=$(stat -c %U:%G "$original_absolute_path")
 		
-		echo "Metadata successfully fetched!" >> "$LOG_FILE"
+		log info file "Metadata successfully fetched!"
 		
-		echo "Checking disk space..." >> "$LOG_FILE"
+		log info file "Checking disk space..."
 		local available_disk_space=$(df -k "$FILES_DIR" | tail -1 | awk '{print $4}')
 			 
 		if (( file_size > available_disk_space ))
 		then 
-		   echo -e "${RED}Error: Not enough space available!${NC}"
-		   echo -e "${RED}Error: Not enough space available!${NC}" >> "$LOG_FILE" 
+		   log error both "${RED}Error: Not enough space available!${NC}"
 		   exit_code=1
 		   continue
 		fi
 		
-		echo "There is enough disk space!" >> "$LOG_FILE"
+		log info file "There is enough disk space!"
 		
-		echo "Generating file id..." >> "$LOG_FILE"
+		log info file "Generating file id..."
 		local file_unique_id=$(generate_unique_id)
 		
-		echo "Moving to recycle bin..."
-		echo "Moving to recycle bin..." >> "$LOG_FILE"
+		log info both "Moving to recycle bin..."
 
 		mv "$original_absolute_path" "$FILES_DIR/$file_unique_id" || 
 		{
-		   echo -e "${RED}Error: Permission denied!${NC}"
-		   echo -e "${RED}Error: Permission denied!${NC}" >> "$LOG_FILE"
+		   log error both "${RED}Error: Permission denied!${NC}"
 		   exit_code=1
 		   continue
 		}
 		
-		echo "File moved as: $file_unique_id"
-		echo "File moved as: $file_unique_id" >> "$LOG_FILE"
+		log info both "File moved as: $file_unique_id"
 		
-		echo "Adding information to metadata file..." >> "$LOG_FILE"
+		log info file "Adding information to metadata file..."
 		
 		echo "$file_unique_id|$original_file_name|$original_absolute_path|$deletion_timestamp|$file_size|$file_type|$original_permissions|$original_owner" >> "$METADATA_FILE"
 		
-		echo "Information added successfully!" >> "$LOG_FILE"	
+		log info file "Information added successfully!"
 	done
 	
 	return $exit_code
@@ -219,7 +262,7 @@ list_recycled() {
 		done < "$METADATA_FILE"
 	fi
 
-	echo "Listed Recycle Bin Contents" >> $LOG_FILE
+	log info file "Listed Recycle Bin Contents"
 	echo "Number of Items in Recycle Bin: $total_items"
 	echo "Total Size of Recycle Bin (KB) : $total_size"
 	return 0
@@ -235,95 +278,91 @@ restore_file() {
 	local file_found=0
 	local PS3="Select an option: "
 	
-	echo "Restore function called with: $recover_file" >> "$LOG_FILE"
+	log info file "Restore function called with: $recover_file"
 	
 	if [ -z "$recover_file" ]; then
-		echo -e "${RED}Error: No file ID specified${NC}" >> "$LOG_FILE"
+		log error both "${RED}Error: No file ID specified${NC}"
 		return 1
 	fi
 	
-	echo "Searching file..."
-	echo "Searching file..." >> "$LOG_FILE"
+	log info both "Searching file..."
 	
 	while IFS='|' read -r file_id original_name original_path deletion_date file_size file_type permissions owner <&3
-	   do 
-	      if [[ "$recover_file" == "$file_id" || "$recover_file" == "$original_name" ]] 
-	      then 
-	         echo "File match found!"
-	         echo "File match found!" >> "$LOG_FILE"
-	         file_found=1
-	         local restore_name="$original_name"
-	         local original_dir=$(dirname "$original_path")
+		do 
+	    	if [[ "$recover_file" == "$file_id" || "$recover_file" == "$original_name" ]] 
+	     	then 
+	        	log info both "File match found!"
+				file_found=1
+				local restore_name="$original_name"
+				local original_dir=$(dirname "$original_path")
 	         
 	         
-	         if [[ -d "$original_dir" ]]
-	         then 
-	            echo "Old directory found!" >> "$LOG_FILE"
-	            if [[ -f "$original_dir/$original_name" ]]
-	            then 
-	               echo "This file already exists at original path!"
-	               echo "This file already exists at original path!" >> "$LOG_FILE"
-	               select option in "Overwrite" "Restore with modified name" "Cancel operation"
-	               do 
-	                  case $option in 
-	                     "Overwrite")
-	                         echo "Overwrting file..." >> "$LOG_FILE"
-	                         ;; 
-	                     "Restore with modified name")
-	                         echo "Changing file name..." >> "$LOG_FILE"
-	                         local restore_timestamp=$(date +"%Y-%m-%d_%H:%M:%S")
-	                         restore_name="${original_name}_${restore_timestamp}"
-	                         ;;
-	                     "Cancel operation")
-	                         echo "Cancelling restore." >> "$LOG_FILE" 
-	                         return 1
-	                         ;;
-	                  esac
-	                  break
-	               done
-	            fi
-	         else 
-	            echo "Old directory does not exist anymore, creating parent directories..." >> "$LOG_FILE"
-	            mkdir -p "$original_dir" || 
-	            {
-	               echo -e "${RED}Error: Permission denied!${NC}" >> "$LOG_FILE"
-	               return 1
-	            }
-	            echo "Parent directories created: $original_dir" >> "$LOG_FILE"
-	         fi
-	         
-	         echo "Checking available disk space..." >> "$LOG_FILE"
-	         
-	         local available_disk_space=$(df -k "$original_dir" | tail -1 | awk '{print $4}')
+				if [[ -d "$original_dir" ]]
+				then 
+					log info file "Old directory found!"
+					if [[ -f "$original_dir/$original_name" ]]
+					then 
+						log info both "This file already exists at original path!"
+						select option in "Overwrite" "Restore with modified name" "Cancel operation"
+						do 
+							case $option in 
+								"Overwrite")
+									log info file "Overwrting file..."
+									;; 
+								"Restore with modified name")
+									log info file "Changing file name..."
+									local restore_timestamp=$(date +"%Y-%m-%d_%H-%M-%S")
+									restore_name="${original_name}_${restore_timestamp}"
+									;;
+								"Cancel operation")
+									log info both "Cancelling restore."
+									return 1
+									;;
+							esac
+							break
+						done
+					fi
+				else 
+					log info file "Old directory does not exist anymore, creating parent directories..."
+					mkdir -p "$original_dir" || 
+					{
+					log error both "${RED}Error: Permission denied!${NC}"
+					return 1
+					}
+					log info file "Parent directories created: $original_dir"
+				fi
+				
+				log info file "Checking available disk space..." >> "$LOG_FILE"
+				
+				local available_disk_space=$(df -k "$original_dir" | tail -1 | awk '{print $4}')
 
-	         if [[ $file_size -gt $available_disk_space ]]
-	         then 
-	            echo -e "${RED}Error: Not enough space available!${NC}" >> "$LOG_FILE" 
-	            return 1
-	         fi
-	         
-	         echo "Moving file..." > "$LOG_FILE"
-	         mv "$FILES_DIR/$file_id" "$original_dir/$restore_name" || 
-	         {
-	            echo -e "${RED}Error: Permission denied!${NC}" >> "$LOG_FILE"
-	            return 1
-	         }
-	         
-	         echo "Restoring permissions..." >> "$LOG_FILE"
-	         chmod "$permissions" "$original_dir/$restore_name"
-	         
-	         echo "Removing data from metadata file..." >> "$LOG_FILE"
-	         sed -i "/^$file_id|/d" "$METADATA_FILE"
-	         
-	         echo "Restore complete!"
-	         echo "Restore complete!" >> "$LOG_FILE"
-	      fi
+				if (( file_size > available_disk_space ))
+				then 
+					log error both "${RED}Error: Not enough space available!${NC}" 
+					return 1
+				fi
+				
+				log info file "Moving file..." 
+				mv "$FILES_DIR/$file_id" "$original_dir/$restore_name" || 
+				{
+					log error both "${RED}Error: Permission denied!${NC}" 
+					return 1
+				}
+				
+				log info file "Restoring permissions..."
+				chmod "$permissions" "$original_dir/$restore_name"
+				
+				log info file "Removing data from metadata file..."
+				sed -i "/^$file_id|/d" "$METADATA_FILE"
+				
+				log info both "Restore complete!"
+	    	fi
 
 	   done 3< <(tail -n +3 "$METADATA_FILE")
 	   
 	   if [[ $file_found -eq 0 ]]
 	   then 
-	      echo "No match was found for file: $recover_file" >> "$LOG_FILE"
+	      log info both "No match was found for file: $recover_file"	
 	      return 1	
 	   fi
 	         
@@ -361,38 +400,31 @@ empty_recyclebin() {
 		while IFS='|' read -r file_id original_name original_path deletion_date file_size file_type permissions owner; do
 			if [[ "$file_id" == "$1" || "$original_name" == "$1" ]]; then
 				rm -r "$FILES_DIR/$file_id"
-				echo "$file_id - $original_name permanently deleted"
-				echo "$file_id - $original_name permanently deleted" >> $LOG_FILE
+				log info both "$file_id - $original_name permanently deleted"
 				sed -i "/^$file_id|/d" "$METADATA_FILE"
-				echo "$file_id - $original_name removed from metadata"
-				echo "$file_id - $original_name removed from metadata" >> $LOG_FILE
+				log info both "$file_id - $original_name removed from metadata"
 				return 0
 			fi
 		done < "$METADATA_FILE"
-		echo -e "${RED}Error: file name or id not found${NC}"
-		echo -e "${RED}Error: file name or id not found${NC}" >> $LOG_FILE
+		log error both "${RED}Error: file name or id not found${NC}"
 	else
 		if [[ -z $( ls -A "$FILES_DIR" ) ]]; then
 			echo "The Recycle Bin is Currently Empty"
 			return 0
 		fi
 
-		echo "The following files will be deleted"
+		log info both "The following files will be deleted"
 		list_recycled
-		echo "The following files will be deleted" >> $LOG_FILE
 		list_recycled >> $LOG_FILE
 		
 		rm -r $FILES_DIR
 		mkdir -p "$FILES_DIR"
-		echo "Deleted all files"
-		echo "Deleted all files" >> $LOG_FILE
+		log info both "Deleted all files"
 
 		sed -i '3,$d' $METADATA_FILE #apaga da 3ª À última linha
-		echo "Metadata has been reset" >> $LOG_FILE
-		echo "Metadata has been reset"
+		log info both "Metadata has been reset"
 
-		echo "Recycle Bin emptied" >> $LOG_FILE
-		echo "Recycle Bin emptied"
+		log info both "Recycle Bin emptied"	
 	fi
 	return 0
 }
@@ -413,25 +445,24 @@ search_recycled() {
 	
 	while IFS='|' read -r file_id original_name original_path deletion_date file_size file_type permissions owner
 	do
-	   if echo "$original_name" | grep -iqE "$safe_pattern" || echo "$original_path" | grep -iqE "$safe_pattern" 
-	   then 
-	      matches_found=$(($matches_found+1))
-	      if (( matches_found == 1 ))
-	      then 
-	        printf "%-20s %-20s %-40s %-20s %-12s %-23s %-15s %-20s\n" "Id" "Original Name" "Original Path" "Delete Date" "File Size" "File Type" "Permissions" "Owner"
-		 	printf "%-20s %-20s %-40s %-20s %-12s %-23s %-15s %-20s\n" "--------------------" "--------------------" "----------------------------------------" "--------------------" "------------" "------------------" "--------------" "--------------------"
-	      fi
+	   	if echo "$original_name" | grep -iqE "$safe_pattern" || echo "$original_path" | grep -iqE "$safe_pattern" 
+	   	then 
+			matches_found=$(($matches_found+1))
+			if (( matches_found == 1 ))
+			then 
+				printf "%-20s %-20s %-40s %-20s %-12s %-23s %-15s %-20s\n" "Id" "Original Name" "Original Path" "Delete Date" "File Size" "File Type" "Permissions" "Owner"
+				printf "%-20s %-20s %-40s %-20s %-12s %-23s %-15s %-20s\n" "--------------------" "--------------------" "----------------------------------------" "--------------------" "------------" "------------------" "--------------" "--------------------"
+			fi
 
-	      printf "%-20s %-20s %-40s %-20s %-12s %-23s %-15s %-20s\n" "$file_id" "$original_name" "$original_path" "$deletion_date" "$file_size" "$file_type" "$permissions" "$owner"
-	   fi
-        done < <(tail -n +3 "$METADATA_FILE")
+			printf "%-20s %-20s %-40s %-20s %-12s %-23s %-15s %-20s\n" "$file_id" "$original_name" "$original_path" "$deletion_date" "$file_size" "$file_type" "$permissions" "$owner"
+	   	fi
+    done < <(tail -n +3 "$METADATA_FILE")
 	
 	
 	if (( matches_found == 0 ))
 	then 
-	   echo -e "${RED}Error: No file with '$pattern' was found.${NC}" 
-	   echo -e "${RED}Error: No file with '$pattern' was found.${NC}" >> "$LOG_FILE"
-	   return 1
+		log error both "${RED}Error: No file with '$pattern' was found.${NC}" 
+		return 1
 	fi
 	
 	return 0
@@ -451,7 +482,7 @@ auto_cleanup(){
 	local count=0
 
 	if [ $RETENTION_DAYS -eq -1 ]; then
-		echo "Retention days is not configured."
+		log info both "Retention days is not configured."
 		return 0
 	fi
 
@@ -459,7 +490,7 @@ auto_cleanup(){
 		read -sp "Please input your current password to continue: " passwd
 		echo ""
 		if [[ "$passwd" != "$PASSWD_VALUE" ]]; then
-			echo "Wrong password" 
+			log info both "Wrong password" 
 			exit 1
 		fi
 	fi
@@ -475,8 +506,7 @@ auto_cleanup(){
 			
 			#compare epochs
 			if [ $del_epoch -le $cutoff ]; then
-				echo "auto_cleanup will delete $file_id - $original_name"
-				echo "auto_cleanup will delete $file_id - $original_name" >> $LOG_FILE
+				log info both "auto_cleanup will delete $file_id - $original_name"
 				count=$(($count + 1))
 				empty_recyclebin $file_id "--force"
 			fi
@@ -484,11 +514,9 @@ auto_cleanup(){
 	done < "$METADATA_FILE"
 
 	if [[ $count -eq 0 ]]; then
-		echo "Autoclean didn't delete any files"
-		echo "Autoclean didn't delete any files" >> $LOG_FILE
+		log info both "Autoclean didn't delete any files"
 	else
-		echo "Autoclean deleted $count files"
-		echo "Autoclean deleted $count files" >> $LOG_FILE
+		log info both "Autoclean deleted $count files"
 	fi
 	
 	return 0
@@ -501,37 +529,35 @@ auto_cleanup(){
 # Returns: 0 on success
 #################################################
 check_quota(){
-	echo "check_quota function called." >> "$LOG_FILE"
+	log info file "check_quota function called."
 	
 	source "$CONFIG_FILE"
 	
 	if [[ $MAX_SIZE_MB -eq -1 ]] 
 	then 
-		echo "Max_Size is not configured."
-		gedit $CONFIG_FILE
+		log info both "Max_Size is not configured."
+		nano $CONFIG_FILE
 		return 0
     fi 
         
-    echo "MAX_SIZE_MB = $MAX_SIZE_MB" >> "$LOG_FILE"
+    log info file "MAX_SIZE_MB = $MAX_SIZE_MB"
         
-    echo "Fetching recycle bin size..." >> "$LOG_FILE"
+    log info file "Fetching recycle bin size..."
     local recycle_bin_size=$(du -sm "$RECYCLE_BIN_DIR" | awk '{print $1}')
-    echo "Recycle bin size: $recycle_bin_size MB." >> "$LOG_FILE"
+    log info file "Recycle bin size: $recycle_bin_size MB."
         
     if (( recycle_bin_size >= MAX_SIZE_MB )) 
     then 
-        echo -e "${RED}WARNING: Recycle bin is full!${NC}"
-        echo -e "${RED}WARNING: Recycle bin is full!${NC}" >> "$LOG_FILE"
-        echo "Asking user to clear space..." >> "$LOG_FILE"
+        log error both -e "${RED}WARNING: Recycle bin is full!${NC}"
+        log info file "Asking user to clear space..."
         echo "Do you want to clear some space in recycle bin? [Y/N]"
         read choice
         if [[ $choice == "Y" || $choice == "y" ]] 
         then 
-        	echo "Clearing space..."
-        	echo "Clearing space..." >> "$LOG_FILE"
+        	log info both "Clearing space..."
         	auto_cleanup
         else 
-            echo "User denied" >> "$LOG_FILE"
+            log info file "User denied" >> "$LOG_FILE"
             return 1
         fi 
     fi 
@@ -634,34 +660,30 @@ file_preview(){
 	
 	# Validate input
 	if [ -z "$file_id" ]; then
-	echo -e "${RED}Error: No file id specified${NC}"
-	echo -e "${RED}Error: No file id specified${NC}" >> "$LOG_FILE"
+	log error both "${RED}Error: No file id specified${NC}"
 	return 1
 	fi
 		
-	echo "file_preview function called with: $file_id" >> "$LOG_FILE"
+	log info file "file_preview function called with: $file_id"
 	
 	local file_path="$FILES_DIR/$file_id"
 	
 	# Check if file exists
 	if [ ! -e "$file_path" ]; then
-	echo -e "${RED}Error: File '$file_path' does not exist${NC}"
-	echo -e "${RED}Error: File '$file_path' does not exist${NC}" >> "$LOG_FILE"
+	log error both "${RED}Error: File '$file_path' does not exist${NC}"
 	return 1
 	fi
 	
 	if file "$file_path" | grep -q text
 	then 
-		echo "$file_id is a text file."
-		echo "$file_id is a text file." >> "$LOG_FILE"
-		echo "Showing first ten lines... " >> "$LOG_FILE"
+		log info both "$file_id is a text file."
+		log info file "Showing first ten lines... "
 		
 		echo "First ten lines: "
 		head -n 10 "$file_path"
 	else 
-		echo "$file_id is a binary file."
-		echo "$file_id is a binary file." >> "$LOG_FILE"
-		echo "Displaying file information..." >> "$LOG_FILE"
+		log info both "$file_id is a binary file."
+		log info file "Displaying file information..."
 		
 		echo "File information: "
 		file "$file_path"
@@ -680,7 +702,7 @@ secure_operation(){
 	source "$CONFIG_FILE"
 	local passwd_active=$PASSWD_ACTIVE
 	local passwd_value=$PASSWD_VALUE
-	echo "secure_operation called" >> "$LOG_FILE"
+	log info file "secure_operation called"
 	if [[ $passwd_active -eq 0 ]]; then
 		read -p "Password is currently inactive, would you like to activate it? [Y/n]" activate
 		if [[ ! "$activate" =~ ^([yY]|[yY][eE][sS])$ ]]; then
@@ -691,8 +713,7 @@ secure_operation(){
 		echo ""
 		passwd_active=1
 		passwd_value="$passwd"
-		echo "Password is now active and set"
-		echo "Password is now active and set" >> "$LOG_FILE"
+		log info both "Password is now active and set"
 	elif [[ $passwd_active -eq 1 ]]; then
 		echo "Password is currently active"
 		echo "Would you like to:"
@@ -706,8 +727,7 @@ secure_operation(){
 			echo ""
 			if [[ "$passwd" == "$passwd_value" ]]; then
 				passwd_active=0
-				echo "Password is now inactive"
-				echo "Password is now inactive" >> "$LOG_FILE"
+				log info both "Password is now inactive"
 			else
 				echo "Wrong password, try again"
 				exit 1
@@ -719,8 +739,7 @@ secure_operation(){
 				read -sp "Please set your new password: " passwd
 				echo ""
 				passwd_value="$passwd"
-				echo "Password has been changed"
-				echo "Password has been changed" >> "$LOG_FILE"
+				log info both "Password has been changed"
 			else
 				echo "Wrong password, try again"
 				exit 1
