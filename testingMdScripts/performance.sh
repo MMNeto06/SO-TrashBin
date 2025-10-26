@@ -32,7 +32,7 @@ echo ""
 
 echo "Starting time for search command" #We will be searching for all files with a 0 in its name
 start=$(date +%s.%N)
-$recycle_bin_script "search" "1"
+$recycle_bin_script "search" "1" #Change if needed
 end=$(date +%s.%N)
 elapsed_time=$(echo $end - $start | bc)
 echo "Time to search recycle bin: $elapsed_time s"

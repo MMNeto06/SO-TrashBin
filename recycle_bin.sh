@@ -230,10 +230,6 @@ delete_file() {
 # Returns: 0 on success
 #################################################
 list_recycled() {
-	#TODO: implementar detailed DONE
-	#confirmar que file size é legível DONE		#CONFIRMAR QUE ESTÁ DONE
-	#Tratar lista vazia de forma graciosa DONE
-	#Mostrar total de itens e total de espaço ocupado DONE
 	echo "=== Recycle Bin Contents ==="
 
 	if [[ -z $( ls -A "$FILES_DIR" ) ]]; then
@@ -253,7 +249,15 @@ list_recycled() {
 				else
 					local size_to_bytes=$(($file_size * 1024))
 					local readable_filesize=$( numfmt --to=iec $size_to_bytes )
-					printf "%-20s %-20s %-40s %-20s %-15s %-23s %-15s %-20s\n" "$file_id" "$original_name" "$original_path" "$deletion_date" "$readable_filesize" "$file_type" "$permissions" "$owner"
+					local print_original_name=$original_name
+					local print_original_path=$original_path
+					if [[ ${#original_name} -gt 20 ]]; then
+						print_original_name="${original_name:0:16}..."
+					fi
+					if [[ ${#original_path} -gt 40 ]]; then
+						print_original_path="${original_path:0:36}..."
+					fi
+					printf "%-20s %-20s %-40s %-20s %-15s %-23s %-15s %-20s\n" "$file_id" "$print_original_name" "$print_original_path" "$deletion_date" "$readable_filesize" "$file_type" "$permissions" "$owner"
 					total_items=$(($total_items + 1))
 					total_size=$(($total_size + $file_size))
 				fi
@@ -269,7 +273,11 @@ list_recycled() {
 				else
 					local size_to_bytes=$(($file_size * 1024))
 					local readable_filesize=$( numfmt --to=iec $size_to_bytes )
-					printf "%-20s %-20s %-20s %-12s\n" "${file_id:0:10}_..." "$original_name" "$deletion_date" "$readable_filesize"
+					local print_original_name=$original_name
+					if [[ ${#original_name} -gt 20 ]]; then
+						print_original_name="${original_name:0:16}..."
+					fi
+					printf "%-20s %-20s %-20s %-12s\n" "${file_id:0:10}_..." "$print_original_name" "$deletion_date" "$readable_filesize"
 					total_items=$(($total_items + 1))
 					total_size=$(($total_size + $file_size))
 				fi
@@ -470,7 +478,15 @@ search_recycled() {
 	      fi
 			local size_to_bytes=$(($file_size * 1024))
 			local readable_filesize=$( numfmt --to=iec $size_to_bytes )
-	      	printf "%-20s %-20s %-40s %-20s %-12s %-23s %-15s %-20s\n" "$file_id" "$original_name" "$original_path" "$deletion_date" "$readable_filesize" "$file_type" "$permissions" "$owner"
+			local print_original_name=$original_name
+			local print_original_path=$original_path
+			if [[ ${#original_name} -gt 20 ]]; then
+				print_original_name="${original_name:0:16}..."
+			fi
+			if [[ ${#original_path} -gt 40 ]]; then
+				print_original_path="${original_path:0:36}..."
+			fi
+	      	printf "%-20s %-20s %-40s %-20s %-12s %-23s %-15s %-20s\n" "$file_id" "$print_original_name" "$print_original_path" "$deletion_date" "$readable_filesize" "$file_type" "$permissions" "$owner"
 	   fi
         done < <(tail -n +3 "$METADATA_FILE")
 	
@@ -589,11 +605,6 @@ check_quota(){
 # Returns: 0 on success
 #################################################
 show_statistics(){
-	#TODO:Display total number of items in recycle bin  DONE
-	# Show total storage used with quota percentage 	DONE
-	# Break down by file type (files vs directories) DONE
-	# Show oldest and newest items DONE
-	# Display average file size DONE
 
 	source "$CONFIG_FILE"
 	local total_items=0
@@ -637,35 +648,21 @@ show_statistics(){
 	local avg_size_to_bytes=$(($avg_file_size * 1024))
 	local readable_avgsize=$( numfmt --to=iec $avg_size_to_bytes )
 	local recycle_bin_size_mb=$(du -sm "$RECYCLE_BIN_DIR" | awk '{print $1}')
-	local quota_percentage;
+	#local quota_percentage;
 
-	echo "=== Statistics ==="
-	echo "Total number of items: $total_items"
+	log info both "=== Statistics ==="
+	log info both "Total number of items: $total_items"
 	if [[ $MAX_SIZE_MB -eq -1 ]]; then
-		echo "Total size of bin: $readable_totalsize"
+		log info both "Total size of bin: $readable_totalsize"
 	else
-		quota_percentage=$(echo "scale=3; $recycle_bin_size_mb / $MAX_SIZE_MB" | bc -l)
-		echo "Storage used: $quota_percentage %"
+		local quota_percentage=$(echo "scale=3; $recycle_bin_size_mb / $MAX_SIZE_MB" | bc -l)
+		log info both "Storage used: $quota_percentage %"
 	fi
-	echo "Number of files in bin: $n_files"
-	echo "Number of directories in bin: $n_dir"
-	echo "Oldest item in bin: $oldest_file"
-	echo "Newest item in bin: $newest_file"
-	echo "Average size of item: $readable_avgsize"
-
-	echo "=== Statistics ===" >> $LOG_FILE
-	echo "Total number of items: $total_items" >> $LOG_FILE
-	if [[ $MAX_SIZE_MB -eq -1 ]]; then
-		echo "Total size of bin: $readable_totalsize" >> $LOG_FILE
-	else
-		echo "Storage used: $quota_percentage %" >> $LOG_FILE
-	fi
-	echo "Number of files in bin: $n_files" >> $LOG_FILE
-	echo "Number of directories in bin: $n_dir" >> $LOG_FILE
-	echo "Oldest item in bin: $oldest_file" >> $LOG_FILE
-	echo "Newest item in bin: $newest_file" >> $LOG_FILE
-	echo "Average size of item: $readable_avgsize" >> $LOG_FILE
-	return 0
+	log info both "Number of files in bin: $n_files"
+	log info both "Number of directories in bin: $n_dir"
+	log info both "Oldest item in bin: $oldest_file"
+	log info both "Newest item in bin: $newest_file"
+	log info both "Average size of item: $readable_avgsize"
 
 }
 
