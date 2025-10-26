@@ -1,6 +1,4 @@
 delete_file references: 
- - remove lines: https://stackoverflow.com/questions/5410757/how-to-delete-from-a-text-file-all-lines-that-contain-a-specific-string
- - disk free space: https://opensource.com/article/18/7/how-check-free-disk-space-linux
  
 restore_file references: 
  - while and select in the same block of code: 

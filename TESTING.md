@@ -1,4 +1,6 @@
 # MANUAL TESTING
+## Authors
+Miguel dos Santos Neto (125200) & Diogo Coelho e Silva (125240) 
 
 ## Basic Functionality Tests
 

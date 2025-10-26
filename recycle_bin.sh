@@ -2,7 +2,7 @@
 
 #######################################################
 # Linux Recycle Bin Simulation
-# Author: Diogo Silva (125240) e Miguel Neto (125200)
+# Authors: Diogo Silva (125240) & Miguel Neto (125200)
 # Date: [Date]
 # Description: Shell-based recycle bin system
 #######################################################
@@ -204,6 +204,7 @@ delete_file() {
 		
 		log info both "Moving to recycle bin..."
 
+		#
 		mv "$original_absolute_path" "$FILES_DIR/$file_unique_id" 2>/dev/null || 
 		{
 		   log error both "${RED}Error: Permission denied!${NC}"
