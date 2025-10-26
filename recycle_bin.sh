@@ -418,7 +418,7 @@ empty_recyclebin() {
 			read -sp "Please input your current password to continue: " passwd
 			echo ""
 			if [[ "$passwd" != "$PASSWD_VALUE" ]]; then
-				echo "Wrong password" 
+				echo -e "${RED}Wrong password, try again${NC}" 
 				exit 1
 			fi
 		fi
@@ -522,7 +522,7 @@ auto_cleanup(){
 		read -sp "Please input your current password to continue: " passwd
 		echo ""
 		if [[ "$passwd" != "$PASSWD_VALUE" ]]; then
-			log info both "Wrong password" 
+			log info both "${RED}Wrong password, try again${NC}" 
 			exit 1
 		fi
 	fi
@@ -746,7 +746,7 @@ secure_operation(){
 				passwd_active=0
 				log info both "Password is now inactive"
 			else
-				echo "Wrong password, try again"
+				echo -e "${RED}Wrong password, try again${NC}"
 				exit 1
 			fi
 		elif [[ $option -eq 2 ]]; then
@@ -758,7 +758,7 @@ secure_operation(){
 				passwd_value="$passwd"
 				log info both "Password has been changed"
 			else
-				echo "Wrong password, try again"
+				echo -e "${RED}Wrong password, try again${NC}"
 				exit 1
 			fi
 		else
@@ -766,7 +766,7 @@ secure_operation(){
 			return 0
 		fi
 	else
-		echo "An error has ocurred, deactivating password"
+		echo -e "${RED}An error has ocurred, deactivating password${NC}"
 		passwd_active=0
 	fi
 
