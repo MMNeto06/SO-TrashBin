@@ -1094,4 +1094,171 @@ OR
 
 ## Optional Features Tests (SPLIT)
 
+### Test Case 36: Automatically clean the Recycle Bin
+**Objective:** Verify that the recycle bin will automatically clean old files when prompted to
+
+**Pre-condition:** The configuration file must have a value different than -1 for the RETENTION_DAYS variable. For the purposes of this test, given how it is set, setting it to 0 should work.
+
+**Steps:**
+0. Alter the configuration file, easily accessible with `./recycle_bin.sh config` 
+1. Create and delete a file: `touch test.txt; ./recycle_bin delete test.txt`
+2. Ensure that the file was deleted: `./recycle_bin.sh list`
+3. Run auto-cleanup: `./recycle_bin.sh autoclean`
+4. Check that the bin has been emptied of the old files
+
+**Expected Result:**
+- File is moved to the recycle bin
+- Then autoclean detects that it is older than 0 days
+- The file is automatically removed
+
+**Actual Result:** 
+- File is moved to recycle_bin
+- Terminal displays that autoclean has run successfully:
+<pre>auto_cleanup will delete 1761491139_48r21n - test.txt
+1761491139_48r21n - test.txt permanently deleted
+1761491139_48r21n - test.txt removed from metadata
+Autoclean deleted 1 files
+</pre>
+
+**Status:** ✅ Pass
+
+**Screenshots:** 
+- Terminal output:
+
+![Output](screenshots/testcase36_output.png)
+
+### Test Case 37: Show statistics about the Recycle Bin
+**Objective:** Check that the recycle bin will display statistics about itself when prompted to
+
+**Steps:**
+1. Create and delete multiple files: `touch test.txt; ./recycle_bin delete test.txt; ...`
+2. Ensure that the files were deleted: `./recycle_bin.sh list`
+3. Run the command: `./recycle_bin.sh stats`
+4. Check that the statistics are correctly displayed
+
+**Expected Result:**
+- Files are moved to the recycle bin
+- Statistics are correctly displayed
+
+**Actual Result:** 
+- File are moved
+- Terminal displays that statistics were shown successfully:
+
+**Status:** ✅ Pass
+
+**Screenshots:** 
+- Terminal output:
+
+![Output](screenshots/testcase37_output.png)
+
+### Test Case 38: Set password for Recycle Bin
+**Objective:** Check that a recycle_bin password can be set and used
+
+**Pre-condition:** There is at least one item in the recycle bin and there isn't a password already set
+
+**Steps:**
+1. Run `./recycle_bin.sh secure`
+2. Set a password through the displayed interface
+3. Run a sensitive command, like `./recycle_bin.sh empty`
+4. Check that the script asks for the password, and that the `empty` command runs after inserting the password 
+
+**Expected Result:**
+- Password is successfully set
+- The `empty` command asks for password before continuing
+- The bin is then promptly emptied
+
+**Actual Result:** 
+- Password was set, as shown by terminal
+- Empty command runs succesfully, with required password
+
+**Status:** ✅ Pass
+
+**Screenshots:** 
+- Terminal output:
+
+![Output](screenshots/testcase38_output.png)
+
+### Test Case 39: Change password for Recycle Bin
+**Objective:** Check that a recycle_bin password can be changed
+
+**Pre-condition:** There is at least one item in the recycle bin and there is a password already set
+
+**Steps:**
+1. Run `./recycle_bin.sh secure`
+2. Change the password by picking option 2 and following the instructions
+3. Run a sensitive command, like `./recycle_bin.sh empty`
+4. Check that the script asks for the password, and that the `empty` command runs after inserting the new password 
+
+**Expected Result:**
+- Password is successfully changed
+- The `empty` command asks for password before continuing
+- The bin is then promptly emptied
+
+**Actual Result:** 
+- Password was changed, as shown by terminal
+- Empty command runs succesfully, with the new password
+
+**Status:** ✅ Pass
+
+**Screenshots:** 
+- Terminal output:
+
+![Output](screenshots/testcase39_output.png)
+
+### Test Case 40: Disable password for Recycle Bin
+
+**Objective:** Check that a recycle_bin password can be disabled
+
+**Pre-condition:** There is at least one item in the recycle bin and there is a password already set
+
+**Steps:**
+1. Run `./recycle_bin.sh secure`
+2. Disable the password by picking option 1 and following the instructions
+3. Run a sensitive command, like `./recycle_bin.sh empty`
+4. Check that the script asks for the password, and that the `empty` command runs after inserting the new password 
+
+**Expected Result:**
+- Password is successfully disabled
+- The `empty` command doesn't ask for password before continuing, only confirmation
+- The bin is then promptly emptied
+
+**Actual Result:** 
+- Password was disabled, as shown by terminal
+- Empty command runs succesfully, with the new password
+
+**Status:** ✅ Pass
+
+**Screenshots:** 
+- Terminal output:
+
+![Output](screenshots/testcase40_output.png)
+
+
+### Test Case 41: Wrong password aborts operation
+**Objective:** Check that the script will abort an operation if the wrong password is given
+
+**Pre-condition:** There is at least one item in the recycle bin and there is a password already set
+
+**Steps:**
+1. Run a sensitive command, like `./recycle_bin.sh empty`
+2. Check that the script asks for the password
+3. Insert a wrong password
+4. Check that an error message is displayed
+
+**Expected Result:**
+- The `empty` command asks for password before continuing
+- Error message is displayed
+
+**Actual Result:** 
+- Password was asked for
+- Error message is displayed: ""
+
+**Status:** ✅ Pass
+
+**Screenshots:** 
+- Terminal output:
+
+![Output](screenshots/testcase41_output.png)
+
+
 ### TODO
