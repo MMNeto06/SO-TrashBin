@@ -1,0 +1,169 @@
+# TECHNICAL DOCUMENT
+## Authors
+Miguel dos Santos Neto (125200) & Diogo Coelho e Silva (125240) 
+
+## System architecture diagram (TODO)
+
+## Data flow diagrams (TODO)
+
+## Metadata Schema Explanation 
+### Purpose of Metadata
+The metadata file is essential for the correct functioning of the program, as nearly every operation involves reading from or writing to it. It ensures that information about deleted files — such as their original location, size, permissions, and ownership—is preserved, allowing reliable restoration and system management.
+
+### File Structure
+The metadata schema follows a CSV-like format, where each line represents a deleted file and contains fields separated by a pipe delimiter (|).
+
+General format: 
+ID|ORIGINAL_NAME|ORIGINAL_PATH|DELETION_DATE|FILE_SIZE|FILE_TYPE|PERMISSIONS|OWNER
+
+Parameters: 
+- ID: Unique identifier of the deleted file.
+- ORIGINAL_NAME: Name of the file before deletion.
+- ORIGINAL_PATH: Absolute path where the file was located before deletion.
+- DELETION_DATE: Date and time when the file was deleted (YYYY-MM-DD_HH-MM-SS)
+- FILE_SIZE: Size of the file at the time of deletion (in KB).
+- FILE_TYPE
+- PERMISSIONS: File permissions prior to deletion.
+- OWNER: User who owned the file.
+
+## Function descriptions 
+### `log()`
+**Purpose:**  
+Writes important information to log file and/or terminal.
+
+**Parameters:**
+- $1: message type (info, error)
+- $2: where to write (terminal, file or both)			  
+- $3: information to write
+
+**Return Value:**  
+- `0` on success
+- `1` on failure
+
+**Notes:**  
+- If message type is error, preserves colors by using "echo -e".
+
+### `lock_operation()`
+**Purpose:**  
+Locks current operation, so there can not be any concurrent operations.
+
+**Parameters:** None
+
+**Return Value:**  
+- `1` if another instance is running
+
+**Notes:**  
+- Uses a temporary directory to check if there are any running operations.
+- Logs the operation details to log file and/or user.
+
+### `initialize_recyclebin()`
+**Purpose:**  
+Initializes the recycle bin structure, including critical directories and files.
+
+**Parameters:** None  
+
+**Return Value:**  
+- `0` on success
+
+**Notes:**  
+- If the structure is already created, checks if metadata file is corrupted, by calling `check_metadata_corruption()` function.
+
+### `check_metadata_corruption()`
+**Purpose:**  
+Checks if metadata file is corrupted.
+
+**Parameters:** None  
+
+**Return Value:**  
+- `0` on success
+
+**Notes:**  
+- If metadata file is corrupted, repairs it by calling `repair_metadata_file()` function.
+- Logs the operation details to log file and/or user.
+
+### `repair_metadata_file()`
+**Purpose:**  
+Repairs corrupted metadata file.
+
+**Parameters:** None  
+
+**Return Value:**  
+- `0` on success
+
+**Notes:**  
+- If recycle bin is not empty, empties it out.
+- Logs the operation details to log file and/or user.
+
+### `generate_unique_id()`
+**Purpose:**  
+Generates unique ID for deleted files
+
+**Parameters:** None  
+
+**Return:**  
+- Prints unique ID to stdout
+
+### `delete_file()`
+**Purpose:**  
+Moves a file or directory to the recycle bin, updates the metadata, and logs the operation.
+
+**Parameters:**
+- $1: path to file/directory  
+
+**Return Value:**  
+- `0` on success
+- `1` on failure
+
+**Notes:**  
+- Updates metadata file.
+- Checks available disk space before moving the file/directory.
+- Handles directories recursively.
+- Logs the operation details to log file and/or user.
+
+### `list_recycled()` -> MIGUEL
+
+### `restore_file()`
+**Purpose:**  
+Restores file from recycle bin, updates the metadata, and logs the operation.
+
+**Parameters:**
+- $1: unique ID or name of file to restore
+
+**Return Value:**  
+- `0` on success
+- `1` on failure
+
+**Notes:**  
+- Updates metadata file.
+- Checks available disk space before moving the file/directory.
+- Preserves file permissions.
+- If the original path was deleted, creates parent directories.
+- If there is another file with the same name as the restoring file, gives user the option to: 
+    - Overwrite file; 
+    - Restore with a modified name (with timestamp);
+    - Cancel operation.
+- Logs the operation details to log file and/or user.
+
+### `empty_recyclebin()` -> MIGUEL
+
+### `search_recycled()`
+
+### `auto_cleanup()` -> MIGUEL
+
+### `check_quota()`
+
+### `show_statistics()` -> MIGUEL
+
+### `file_preview()`
+
+### `secure_operation()` -> MIGUEL
+
+### `display_help()`
+
+### `main()`
+
+## Design decisions and rationale (TODO)
+
+## Algorithm explanations (TODO)
+
+## Flowcharts for complex operations (TODO)

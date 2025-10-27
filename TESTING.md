@@ -1084,9 +1084,30 @@ mv: impossível mover &apos;/home/mmneto06/SO/SO-TrashBin/.test&apos; para &apos
 
 ![Test image](screenshots/testcase30_error_message.png)
 
-
 ### Test Case 31: Concurrent Operations
-TODO - wtf does this mean - allegedly not needed
+**Objective:** Verify that concurrent operations are not allowed
+
+**Steps:**
+1. Run (Create test files): `touch testFile1 testFile2`
+2. Run: `./recycle_bin.sh delete testFile1 & ./recycle_bin.sh delete testFile2 & wait`
+3. Verify that an error message is displayed
+4. Run: `./recycle_bin.sh list`
+5. Verify that only one file is moved
+
+**Expected Result:**
+- Error message is displayed
+- Only one file is moved
+
+**Actual Result:** 
+- Error message is displayed: "Error: Another instance running!"
+- Only one file is moved 
+
+**Status:** ✅ Pass
+
+**Screenshots:** 
+- File informations: 
+![File informations](screenshots/testcase31_output.png)
+
 
 ## Performance Tests
 

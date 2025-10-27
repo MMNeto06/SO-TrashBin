@@ -79,6 +79,7 @@ The following optional features were implemented:
 - check_quota();
 - preview_file();
 - secure_operation();
+- lock_operation();
 	
 ## Configuration
 
@@ -119,6 +120,9 @@ To configure your recycle bin, you should always use the following command: ./re
 
 - Secure Operation:
 ![Secure operation](screenshots/secure_operation.png)
+
+- Lock Operation: 
+![Lock operation](screenshots/lock_operation.png)
 
 ## Known Issues
 
@@ -162,6 +166,9 @@ file_preview(): none
 secure_operation():
 - read -s: https://www.geeksforgeeks.org/linux-unix/bash-script-read-user-input/
 - regex explantion: https://stackoverflow.com/questions/48594826/bash-conditional-loop-issue-y-or-y-yes-n-or-n-no
+
+lock_operation():
+- locking shell script: https://unix.stackexchange.com/questions/22044/correct-locking-in-shell-scripts
 
 ### Usage of LLMs and other notes
 It's important to note that LLMs were used as a support tool to comprehend concepts, to study functionalities of commands identified during research and any debugging that ocurred during the development.

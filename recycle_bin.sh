@@ -13,6 +13,7 @@ FILES_DIR="$RECYCLE_BIN_DIR/files"
 METADATA_FILE="$RECYCLE_BIN_DIR/metadata.db"
 CONFIG_FILE="$RECYCLE_BIN_DIR/config"
 LOG_FILE="$RECYCLE_BIN_DIR/recyclebin.log"
+LOCK_DIR="/tmp/recycle_bin_lock_dir"
 
 # Color codes for output (optional)
 RED='\033[0;31m'
@@ -20,12 +21,12 @@ GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 NC='\033[0m' # No Color
 
-#################################################
+#######################################################
 # Function: initialize_recyclebin
 # Description: Creates recycle bin directory structure
 # Parameters: None
-# Returns: 0 on success, 1 on failure
-#################################################
+# Returns: 0 on success
+#######################################################
 
 initialize_recyclebin() {
 	if [ ! -d "$RECYCLE_BIN_DIR" ]; then
@@ -47,16 +48,15 @@ initialize_recyclebin() {
 		check_metadata_corruption
 	fi
 
-	lock_operation
 	return 0
 }
 
-#################################################
+#####################################################
 # Function: generate_unique_id
 # Description: Generates unique ID for deleted files
 # Parameters: None
 # Returns: Prints unique ID to stdout
-#################################################
+#####################################################
 generate_unique_id() {
 	local timestamp=$(date +%s)
 	local random=$(cat /dev/urandom | tr -dc 'a-z0-9' | fold -w 6 | head -n 1)
@@ -114,7 +114,7 @@ log(){
 # Function: check_metadata_corruption
 # Description: Checks if metadata file is corrupted
 # Parameters: none
-# Returns: 0
+# Returns: 0 on success
 #####################################################
 check_metadata_corruption(){
 	log info file "check_metadata_corruption function called."
@@ -132,48 +132,48 @@ check_metadata_corruption(){
 # Description: Creates a new metadata file if
 # recycle bin is empty, else, empties out recycle bin
 # Parameters: none
-# Returns: 0
+# Returns: 0 on success
 #######################################################
 repair_metadata_file(){
 	log info file "repair_metadata_file function called."
 	log info both "Repairing metadata file..."
+	log info both "Creating a new metadata file..."
+	echo "# Recycle Bin Metadata" > "$METADATA_FILE"
+	echo "ID|ORIGINAL_NAME|ORIGINAL_PATH|DELETION_DATE|FILE_SIZE|FILE_TYPE|PERMISSIONS|OWNER" >> "$METADATA_FILE"
+	log info both "Metadata file successfully created!"
 
-	# if recycle bin is empty, create a new metadata file
-	if [[ -z $( ls -A "$FILES_DIR" ) ]]; then
-		log info both "Creating a new metadata file..."
-		echo "# Recycle Bin Metadata" > "$METADATA_FILE"
-		echo "ID|ORIGINAL_NAME|ORIGINAL_PATH|DELETION_DATE|FILE_SIZE|FILE_TYPE|PERMISSIONS|OWNER" >> "$METADATA_FILE"
-		log info both "Metadata file successfully created!"
-	else 	
+	if [[ ! -z $( ls -A "$FILES_DIR" ) ]]; then
 		log info both "Recycle bin needs to be emptied out!"
-		empty_recyclebin --force
+		empty_recyclebin --force	
 	fi
 
 	return 0
 }
 
 #####################################################
-# Function: lock_operation
-# Description: Checks if metadata file is corrupted
+# Function: lock_operation (OPTIONAL)
+# Description: Locks operation, so there can not be 
+#  			   any concurrent operations
 # Parameters: none
-# Returns: 0
+# Exit: 1 if another instance is already running
 #####################################################
-lock_operation(){
-	LOCK_FILE="/tmp/recycle_bin.lock"
-	if [ -f "$LOCK_FILE" ]; then
-		echo "Another instance is running"
-		exit 1
+lock_operation() {
+	# Locking shell script 
+	# Source: Unix & Linux - https://unix.stackexchange.com/questions/22044/correct-locking-in-shell-scripts
+	if ! mkdir "$LOCK_DIR" 2>/dev/null; then
+		log error both "${RED}Error: Another instance running!${NC}"
+		exit 1 
 	fi
-	touch "$LOCK_FILE"
-	trap "rm -f $LOCK_FILE" EXIT
+
+	trap 'rmdir "$LOCK_DIR"' EXIT
 }
 
-#################################################
+####################################################
 # Function: delete_file
 # Description: Moves file/directory to recycle bin
 # Parameters: $1 - path to file/directory
 # Returns: 0 on success, 1 on failure
-#################################################
+####################################################
 delete_file() {
 	local exit_code=0
 	local this_absolute_path=$(realpath "$0") # absolute path of this script
@@ -371,12 +371,12 @@ list_recycled() {
 	echo "Total Size of Recycle Bin: $readable_total_size"
 	return 0
 }
-#################################################
+#########################################################
 # Function: restore_file
 # Description: Restores file from recycle bin
 # Parameters: $1 - unique ID or name of file to restore 
 # Returns: 0 on success, 1 on failure
-#################################################
+#########################################################
 restore_file() {
 	local recover_file="$1" 
 	local file_found=0
@@ -935,9 +935,11 @@ EOF
 # Returns: Exit code
 #################################################
 main() {
+	lock_operation
+	
 	# Initialize recycle bin
 	initialize_recyclebin
-	
+
 	# Parse command line arguments
 	case "$1" in
 		delete)
