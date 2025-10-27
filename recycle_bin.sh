@@ -43,7 +43,8 @@ initialize_recyclebin() {
 		echo "PASSWD_ACTIVE=0" >> "$CONFIG_FILE"
 		echo "PASSWD_VALUE=1234" >> "$CONFIG_FILE"
 		echo "Recycle bin initialized at $RECYCLE_BIN_DIR"
-		return 0
+	else 
+		check_metadata_corruption
 	fi
 	return 0
 }
@@ -107,6 +108,48 @@ log(){
 	return 0
 }
 
+#####################################################
+# Function: check_metadata_corruption
+# Description: Checks if metadata file is corrupted
+# Parameters: none
+# Returns: 0
+#####################################################
+check_metadata_corruption(){
+	log info file "check_metadata_corruption function called."
+
+	if [ ! -f "$METADATA_FILE" ] || [ ! -r "$METADATA_FILE" ]; then
+		log error both "${RED}Error: Metadata file is missing or unreadable.${NC}"
+		repair_metadata_file
+	fi
+
+	return 0
+}
+
+#######################################################
+# Function: repair_metadata_file
+# Description: Creates a new metadata file if
+# recycle bin is empty, else, empties out recycle bin
+# Parameters: none
+# Returns: 0
+#######################################################
+repair_metadata_file(){
+	log info file "repair_metadata_file function called."
+	log info both "Repairing metadata file..."
+
+	# if recycle bin is empty, create a new metadata file
+	if [[ -z $( ls -A "$FILES_DIR" ) ]]; then
+		log info both "Creating a new metadata file..."
+		echo "# Recycle Bin Metadata" > "$METADATA_FILE"
+		echo "ID|ORIGINAL_NAME|ORIGINAL_PATH|DELETION_DATE|FILE_SIZE|FILE_TYPE|PERMISSIONS|OWNER" >> "$METADATA_FILE"
+		log info both "Metadata file successfully created!"
+	else 	
+		log info both "Recycle bin needs to be emptied out!"
+		empty_recyclebin --force
+	fi
+
+	return 0
+}
+
 #################################################
 # Function: delete_file
 # Description: Moves file/directory to recycle bin
@@ -161,7 +204,15 @@ delete_file() {
 		log info file "Fetching metadata..." 
 		
 		local original_file_name=$(basename "$file_path")
-		local original_absolute_path=$(realpath "$file_path")
+		local original_absolute_path
+
+		if [[ -L "$file_path" ]]
+		then 
+			original_absolute_path=$(realpath -s "$file_path")
+		else 
+			original_absolute_path=$(realpath "$file_path")
+		fi 
+
 		local original_dir=$(dirname "$original_absolute_path")
 		
 		if [[ "$original_absolute_path" == "$this_absolute_path" ]] 
@@ -204,7 +255,8 @@ delete_file() {
 		
 		log info both "Moving to recycle bin..."
 
-		#
+		# Silence mv 
+		# Source: Unix & Linux - https://unix.stackexchange.com/questions/87605/is-there-a-way-to-make-mv-fail-silently 
 		mv "$original_absolute_path" "$FILES_DIR/$file_unique_id" 2>/dev/null || 
 		{
 		   log error both "${RED}Error: Permission denied!${NC}"
@@ -311,6 +363,8 @@ restore_file() {
 	
 	log info both "Searching file..."
 	
+	# Free stdin
+	# Source: Unix & Linux - https://unix.stackexchange.com/questions/460266/use-read-as-a-prompt-inside-a-while-loop-driven-by-read 
 	while IFS='|' read -r file_id original_name original_path deletion_date file_size file_type permissions owner <&3
 		do 
 	    	if [[ "$recover_file" == "$file_id" || "$recover_file" == "$original_name" ]] 
@@ -366,6 +420,8 @@ restore_file() {
 					return 1
 				fi
 				
+				# Silence mv 
+				# Source: Unix & Linux - https://unix.stackexchange.com/questions/87605/is-there-a-way-to-make-mv-fail-silently 
 				log info file "Moving file..." 
 				mv "$FILES_DIR/$file_id" "$original_dir/$restore_name" 2>/dev/null || 
 				{
@@ -555,12 +611,12 @@ auto_cleanup(){
 	return 0
 }
 
-#################################################
+##########################################################
 # Function: check_quota (OPTIONAL)
 # Description: Check if recycle bin exceeds MAX_SIZE_MB
 # Parameters: None
-# Returns: 0 on success
-#################################################
+# Returns: 0 on success, 1 on failure
+##########################################################
 check_quota(){
 	log info file "check_quota function called."
 	

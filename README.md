@@ -139,6 +139,7 @@ list_recycled():
 restore_file():
 - silence mv: https://unix.stackexchange.com/questions/87605/is-there-a-way-to-make-mv-fail-silently
 - remove lines: https://stackoverflow.com/questions/5410757/how-to-delete-from-a-text-file-all-lines-that-contain-a-specific-string
+- free stdin: https://unix.stackexchange.com/questions/460266/use-read-as-a-prompt-inside-a-while-loop-driven-by-read
 
 search_recycled():
 - grep to search patterns: https://www.w3schools.com/bash/bash_grep.php

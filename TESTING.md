@@ -688,7 +688,7 @@ The Recycle Bin is Currently Empty
 **Objective:** Verify that the script correctly handles the deletion and restoration of very large files without errors or data corruption.
 
 **Steps:**
-1. Run (Create a large file): `fallocate -l 150M largeTestFile`; reference: https://stackoverflow.com/questions/257844/quickly-create-a-large-file-on-a-linux-system
+1. Run (Create a large file): `fallocate -l 150M largeTestFile`; [Reference](https://stackoverflow.com/questions/257844/quickly-create-a-large-file-on-a-linux-system)
 2. Run: `./recycle_bin.sh delete largeTestFile`
 3. Verify file is removed from current directory
 4. Run: `./recycle_bin.sh list`
@@ -732,7 +732,55 @@ The Recycle Bin is Currently Empty
 ![Restore](screenshots/testcase20_restore.png)
 ![Restore metadata](screenshots/testcase20_restore_metadata.png) 
 
-### Test Case 21: Handle Symbolical Links (TODO) -> EU 
+### Test Case 21: Handle Symbolical Links
+**Objective:** Verify that the script correctly handles the deletion and restoration of symbolic links.
+
+**Steps:**
+1. Run (Create a test file): `touch testFile`
+2. Run (Create a test symbolic link): `ln -s testFile linkToTestFile`; [Reference](https://www.freecodecamp.org/news/linux-ln-how-to-create-a-symbolic-link-in-linux-example-bash-command/)
+3. Run: `./recycle_bin.sh delete linkToTestFile`
+4. Verify that link is moved but testFile is still on current directory
+5. Run: `./recycle_bin.sh list`
+5. Verify link appears in recycle bin
+6. Run: `./recycle_bin.sh restore linkToTestFile`
+7. Verify link is back at original directory
+8. Run: `./recycle_bin.sh list`
+9. Verify restored link does not appear in recycle bin
+
+**Expected Result:**
+- Link is moved to ~/.recycle_bin/files/
+- Metadata entry is created
+- Success message is displayed
+- Link appears in list output
+- Link is moved to original directory
+- Metadata entry is erased
+- Success message is displayed
+- Link does not appear in list output
+
+**Actual Result:** 
+- Deletion: 
+    - Success message is displayed: "File moved as: 1761559436_zp1jar"
+    - Link is removed from current directory
+    - Metadata entry is created: "1761559436_zp1jar|linkToTestFile|/home/dsilva/Desktop/SO-TrashBin/linkToTestFile|2025-10-27_10-03-56|0|symbolic link|777|dsilva:dsilva"
+    - Link appears in list output
+
+- Restore: 
+    - Success message is displayed: "Restore complete!"
+    - Link is moved to original directory
+    - Metadata entry is erased
+    - Link does not appear in list output
+
+**Status:** ✅ Pass
+
+**Screenshots:** 
+- Deletion: 
+![Deletion](screenshots/testcase21_deletion.png)
+![Deletion metadata](screenshots/testcase21_deletion_metadata.png)
+
+- Restore:
+![Restore](screenshots/testcase21_restore.png)
+![Restore metadata](screenshots/testcase21_restore_metadata.png) 
+
 
 ### Test Case 22: Handle Hidden Files 
 **Objective:** Verify that the script correctly handles the deletion and restoration of hidden files.
@@ -922,7 +970,27 @@ The Recycle Bin is Currently Empty
 ![Test image](screenshots/testcase26_error_message.png)
 
 ### Test Case 27: Corrupted Metadata File
-TODO - idk how to do this
+**Objective:** Verify that the script correctly handles corrupted metadata file
+
+**Steps:**
+1. Run (Remove metadata file): `rm ~/.recycle_bin/metadata.db`
+2. Run any script function: `./recycle_bin.sh help` (for example)
+3. Verify that an error message is displayed and metadata file is repaired
+
+**Expected Result:**
+- Error message is displayed
+- Metadata file is repaired
+
+**Actual Result:** 
+- Error message is displayed: "Error: Metadata file is missing or unreadable"
+- Metadata file is repaired
+
+**Status:** ✅ Pass
+
+**Screenshots:** 
+- Error message: 
+
+![Test image](screenshots/testcase27_error_message.png)
 
 ### Test Case 28: Insufficient Disk Space
 **Objective:** Check that the script does not delete or restore a file that is larger than the available disk space.

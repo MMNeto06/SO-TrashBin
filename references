@@ -1,7 +1,7 @@
 delete_file references: 
  
 restore_file references: 
- - while and select in the same block of code: 
+ - free stdin: https://unix.stackexchange.com/questions/460266/use-read-as-a-prompt-inside-a-while-loop-driven-by-read
  
 search_recycled references:
  - grep to search patterns: https://www.w3schools.com/bash/bash_grep.php
