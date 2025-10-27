@@ -38,14 +38,16 @@ initialize_recyclebin() {
 		echo "#!/bin/bash" >> "$CONFIG_FILE"
 		echo "#This is the config file. It behaves like any other bash script" >> "$CONFIG_FILE"
 		echo "#All variables here are imported to the main script when they're needed" >> "$CONFIG_FILE"
-		echo "RETENTION_DAYS=-1" >> "$CONFIG_FILE"
-		echo "MAX_SIZE_MB=-1" >> "$CONFIG_FILE"
+		echo "RETENTION_DAYS=30" >> "$CONFIG_FILE"
+		echo "MAX_SIZE_MB=1024" >> "$CONFIG_FILE"
 		echo "PASSWD_ACTIVE=0" >> "$CONFIG_FILE"
 		echo "PASSWD_VALUE=1234" >> "$CONFIG_FILE"
 		echo "Recycle bin initialized at $RECYCLE_BIN_DIR"
 	else 
 		check_metadata_corruption
 	fi
+
+	lock_operation
 	return 0
 }
 
@@ -150,6 +152,22 @@ repair_metadata_file(){
 	return 0
 }
 
+#####################################################
+# Function: lock_operation
+# Description: Checks if metadata file is corrupted
+# Parameters: none
+# Returns: 0
+#####################################################
+lock_operation(){
+	LOCK_FILE="/tmp/recycle_bin.lock"
+	if [ -f "$LOCK_FILE" ]; then
+		echo "Another instance is running"
+		exit 1
+	fi
+	touch "$LOCK_FILE"
+	trap "rm -f $LOCK_FILE" EXIT
+}
+
 #################################################
 # Function: delete_file
 # Description: Moves file/directory to recycle bin
@@ -168,13 +186,6 @@ delete_file() {
 
 	source "$CONFIG_FILE"
 	
-	if [[ $MAX_SIZE_MB -eq -1 ]] 
-	then 
-		log info both "Max_Size is not configured."
-		nano $CONFIG_FILE
-		return 1
-    fi 
-
 	local max_size_kb=$((MAX_SIZE_MB * 1024))
 
 	for file_path in "$@"
@@ -295,15 +306,14 @@ list_recycled() {
 	local total_items=0
 	local total_size=0
 
-	if [ "$1" == "--detailed" ]; then #this while prints all informarion on metadata
-		#Source: Stack Overflow - https://stackoverflow.com/questions/10929453/read-a-file-line-by-line-assigning-the-value-to-a-variable
+	if [ "$1" == "--detailed" ]; then 
 		while IFS='|' read -r file_id original_name original_path deletion_date file_size file_type permissions owner; do
 			#if it's not the header, then
 			if [ "$file_id" != "# Recycle Bin Metadata" ]; then
 				if [[ "$file_id" == "ID" ]]; then #if it's the line that serves as example, then print aditional header 
 					printf "%-20s %-20s %-40s %-20s %-15s %-23s %-15s %-20s\n" "Id" "Original Name" "Original Path" "Delete Date" "File Size" "File Type" "Permissions" "Owner"
 					printf "%-20s %-20s %-40s %-20s %-15s %-23s %-15s %-20s\n" "--------------------" "--------------------" "----------------------------------------" "--------------------" "---------------" "------------------" "--------------" "--------------------"
-				else #else print metadata of file
+				else #print metadata of file
 					#converstion to readable format
 					#Source: Stack Overflow - https://stackoverflow.com/questions/15854332/file-size-in-human-readable-format
 					local size_to_bytes=$(($file_size * 1024))
@@ -326,8 +336,6 @@ list_recycled() {
 			fi
 		done < "$METADATA_FILE"
 	else
-		#this while prints only the following info: id (truncated), original name, deletion date, filesize (readable)
-		#Source: Stack Overflow - https://stackoverflow.com/questions/10929453/read-a-file-line-by-line-assigning-the-value-to-a-variable
 		while IFS='|' read -r file_id original_name original_path deletion_date file_size file_type permissions owner; do
 			if [ "$file_id" != "# Recycle Bin Metadata" ]; then #if its not the header, then
 				if [ "$file_id" == "ID" ]; then #if it's the line that serves as example, then print aditional header, this time i'ts shorter
@@ -452,6 +460,8 @@ restore_file() {
 				log info file "Restoring permissions..."
 				chmod "$permissions" "$original_dir/$restore_name"
 				
+				# Delete lines from file 
+				# Source: Stack Overflow - https://stackoverflow.com/questions/5410757/how-to-delete-from-a-text-file-all-lines-that-contain-a-specific-string
 				log info file "Removing data from metadata file..."
 				sed -i "/^$file_id|/d" "$METADATA_FILE"
 				
@@ -544,20 +554,23 @@ search_recycled() {
 	local pattern="$1"	
 	local matches_found=0
 	
-	# METER REFERÊNCIA
+	# Regex with sed
+	# Source: Stack Overflow: https://stackoverflow.com/questions/29613304/is-it-possible-to-escape-regex-metacharacters-reliably-with-sed
 	local safe_pattern=$(printf '%s' "$pattern" | sed 's/[.[\^$+{}()|]/\\&/g')
 	safe_pattern=$(printf '%s' "$safe_pattern" | sed 's/\*/.*/g; s/\?/./g')
 	
 	while IFS='|' read -r file_id original_name original_path deletion_date file_size file_type permissions owner
 	do
-	   if echo "$original_name" | grep -iqE "$safe_pattern" || echo "$original_path" | grep -iqE "$safe_pattern" 
-	   then 
-	      matches_found=$(($matches_found+1))
-	      if (( matches_found == 1 ))
-	      then 
-	        printf "%-20s %-20s %-40s %-20s %-12s %-23s %-15s %-20s\n" "Id" "Original Name" "Original Path" "Delete Date" "File Size" "File Type" "Permissions" "Owner"
-		 	printf "%-20s %-20s %-40s %-20s %-12s %-23s %-15s %-20s\n" "--------------------" "--------------------" "----------------------------------------" "--------------------" "------------" "------------------" "--------------" "--------------------"
-	      fi
+		# Using grep to search patterns
+		# Source: W3Schools - https://www.w3schools.com/bash/bash_grep.php
+	   	if echo "$original_name" | grep -iqE "$safe_pattern" || echo "$original_path" | grep -iqE "$safe_pattern" 
+	   	then 
+	      	matches_found=$(($matches_found+1))
+			if (( matches_found == 1 ))
+			then 
+				printf "%-20s %-20s %-40s %-20s %-12s %-23s %-15s %-20s\n" "Id" "Original Name" "Original Path" "Delete Date" "File Size" "File Type" "Permissions" "Owner"
+				printf "%-20s %-20s %-40s %-20s %-12s %-23s %-15s %-20s\n" "--------------------" "--------------------" "----------------------------------------" "--------------------" "------------" "------------------" "--------------" "--------------------"
+			fi
 		  	#conversion to readable format
 			#Source: Stack Overflow - https://stackoverflow.com/questions/15854332/file-size-in-human-readable-format
 			local size_to_bytes=$(($file_size * 1024))
@@ -571,9 +584,8 @@ search_recycled() {
 				print_original_path="${original_path:0:36}..."
 			fi
 	      	printf "%-20s %-20s %-40s %-20s %-12s %-23s %-15s %-20s\n" "$file_id" "$print_original_name" "$print_original_path" "$deletion_date" "$readable_filesize" "$file_type" "$permissions" "$owner"
-	   fi
-        done < <(tail -n +3 "$METADATA_FILE")
-	
+	   	fi
+    done < <(tail -n +3 "$METADATA_FILE")
 	
 	if (( matches_found == 0 ))
 	then 

@@ -65,7 +65,7 @@ test_delete_file() {
 test_list_empty() {
 	echo "=== Test: List Empty Bin ==="
 	setup
-	$SCRIPT list | grep -q "empty"
+	$SCRIPT list | grep -q "Empty"
 	assert_success "List empty recycle bin"
 }
 
@@ -75,7 +75,7 @@ test_restore_file() {
 	echo "test" > "$TEST_DIR/restore_test.txt"
 	$SCRIPT delete "$TEST_DIR/restore_test.txt"
 	# Get file ID from list
-	ID=$($SCRIPT list | grep "restore_test" | awk '{print $1}')
+	ID=$($SCRIPT list --detailed | grep "restore_test" | awk '{print $1}')
 	$SCRIPT restore "$ID"
 	assert_success "Restore file"
 	[ -f "$TEST_DIR/restore_test.txt" ] && echo "✓ File restored"

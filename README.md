@@ -134,7 +134,7 @@ delete_file():
 
 list_recycled():
 - read line by line: https://stackoverflow.com/questions/10929453/read-a-file-line-by-line-assigning-the-value-to-a-variable
-- readable file size (used in stats and searach too): https://stackoverflow.com/questions/15854332/file-size-in-human-readable-format
+- readable file size (used in stats and search too): https://stackoverflow.com/questions/15854332/file-size-in-human-readable-format
 
 restore_file():
 - silence mv: https://unix.stackexchange.com/questions/87605/is-there-a-way-to-make-mv-fail-silently
@@ -143,13 +143,13 @@ restore_file():
 
 search_recycled():
 - grep to search patterns: https://www.w3schools.com/bash/bash_grep.php
-- using cut to separate line: https://unix.stackexchange.com/questions/452508/how-to-use-the-command-cut-to-cut-out-fields-in-a-csv-file-when-fields-contain
+- regex with sed: https://stackoverflow.com/questions/29613304/is-it-possible-to-escape-regex-metacharacters-reliably-with-sed
 
 empty_recyclebin():
  - confirmation: https://stackoverflow.com/questions/18544359/how-do-i-read-user-input-into-a-variable-in-bash
  - hot to use sed: https://stackoverflow.com/questions/4881930/remove-the-last-line-from-a-file-in-bash & https://askubuntu.com/questions/992213/how-to-delete-specific-lines-from-a-txt-file
 
-show_statistics():
+show_statistics(): none
 
 auto_cleanup():
 - config file source idea: https://askubuntu.com/questions/743493/best-way-to-read-a-config-file-in-bash
