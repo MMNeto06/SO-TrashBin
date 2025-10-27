@@ -169,6 +169,7 @@ test_restore_file
 # Add more test functions here
 test_invalid_command
 test_missing_parameters
+test_corrupted_metadata
 test_performace
 teardown
 echo "========================================="
