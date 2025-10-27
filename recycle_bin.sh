@@ -285,23 +285,30 @@ delete_file() {
 list_recycled() {
 	echo "=== Recycle Bin Contents ==="
 
+	#checks if files directory is empty, meaning the bin is empty
 	if [[ -z $( ls -A "$FILES_DIR" ) ]]; then
 		echo "The Recycle Bin is Currently Empty"
 		return 0
 	fi
 
+	#variables initialization
 	local total_items=0
 	local total_size=0
 
-	if [ "$1" == "--detailed" ]; then #este imprime toda a informação
+	if [ "$1" == "--detailed" ]; then #this while prints all informarion on metadata
+		#Source: Stack Overflow - https://stackoverflow.com/questions/10929453/read-a-file-line-by-line-assigning-the-value-to-a-variable
 		while IFS='|' read -r file_id original_name original_path deletion_date file_size file_type permissions owner; do
+			#if it's not the header, then
 			if [ "$file_id" != "# Recycle Bin Metadata" ]; then
-				if [[ "$file_id" == "ID" ]]; then
+				if [[ "$file_id" == "ID" ]]; then #if it's the line that serves as example, then print aditional header 
 					printf "%-20s %-20s %-40s %-20s %-15s %-23s %-15s %-20s\n" "Id" "Original Name" "Original Path" "Delete Date" "File Size" "File Type" "Permissions" "Owner"
 					printf "%-20s %-20s %-40s %-20s %-15s %-23s %-15s %-20s\n" "--------------------" "--------------------" "----------------------------------------" "--------------------" "---------------" "------------------" "--------------" "--------------------"
-				else
+				else #else print metadata of file
+					#converstion to readable format
+					#Source: Stack Overflow - https://stackoverflow.com/questions/15854332/file-size-in-human-readable-format
 					local size_to_bytes=$(($file_size * 1024))
 					local readable_filesize=$( numfmt --to=iec $size_to_bytes )
+					#truncates original_name and original_path if they are too long
 					local print_original_name=$original_name
 					local print_original_path=$original_path
 					if [[ ${#original_name} -gt 20 ]]; then
@@ -310,27 +317,35 @@ list_recycled() {
 					if [[ ${#original_path} -gt 40 ]]; then
 						print_original_path="${original_path:0:36}..."
 					fi
+					#print the a formatted line with metadata
 					printf "%-20s %-20s %-40s %-20s %-15s %-23s %-15s %-20s\n" "$file_id" "$print_original_name" "$print_original_path" "$deletion_date" "$readable_filesize" "$file_type" "$permissions" "$owner"
+					#update variables
 					total_items=$(($total_items + 1))
 					total_size=$(($total_size + $file_size))
 				fi
 			fi
 		done < "$METADATA_FILE"
 	else
-		#aqui imprime-se só: id (truncated), original name, deletion date, filesize (legível)
+		#this while prints only the following info: id (truncated), original name, deletion date, filesize (readable)
+		#Source: Stack Overflow - https://stackoverflow.com/questions/10929453/read-a-file-line-by-line-assigning-the-value-to-a-variable
 		while IFS='|' read -r file_id original_name original_path deletion_date file_size file_type permissions owner; do
-			if [ "$file_id" != "# Recycle Bin Metadata" ]; then
-				if [ "$file_id" == "ID" ]; then
+			if [ "$file_id" != "# Recycle Bin Metadata" ]; then #if its not the header, then
+				if [ "$file_id" == "ID" ]; then #if it's the line that serves as example, then print aditional header, this time i'ts shorter
 					printf "%-20s %-20s %-20s %-15s\n" "Id" "Original Name" "Delete Date" "File Size"
 					printf "%-20s %-20s %-20s %-15s\n" "--------------------" "--------------------" "--------------------" "---------------"
 				else
+					#converstion to readable format
+					#Source: Stack Overflow - https://stackoverflow.com/questions/15854332/file-size-in-human-readable-format
 					local size_to_bytes=$(($file_size * 1024))
 					local readable_filesize=$( numfmt --to=iec $size_to_bytes )
+					#truncates original_name if it's are too long
 					local print_original_name=$original_name
 					if [[ ${#original_name} -gt 20 ]]; then
 						print_original_name="${original_name:0:16}..."
 					fi
+					#prints a shorter formatteed line with metadata
 					printf "%-20s %-20s %-20s %-12s\n" "${file_id:0:10}_..." "$print_original_name" "$deletion_date" "$readable_filesize"
+					#update variables
 					total_items=$(($total_items + 1))
 					total_size=$(($total_size + $file_size))
 				fi
@@ -338,9 +353,14 @@ list_recycled() {
 		done < "$METADATA_FILE"
 	fi
 
+	#prints the value of the variables, that is the total number of items and the total size of the bin
 	log info file "Listed Recycle Bin Contents"
 	echo "Number of Items in Recycle Bin: $total_items"
-	echo "Total Size of Recycle Bin (KB) : $total_size"
+	#converstion of total size to readable format
+	#Source: Stack Overflow - https://stackoverflow.com/questions/15854332/file-size-in-human-readable-format
+	local total_size_to_bytes=$(($total_size * 1024))
+	local readable_total_size=$( numfmt --to=iec $total_size_to_bytes )
+	echo "Total Size of Recycle Bin: $readable_total_size"
 	return 0
 }
 #################################################
@@ -470,6 +490,8 @@ empty_recyclebin() {
 	fi
 	
 	if [ $force -eq 1 ]; then
+		#Confirm if user wants to continue
+		#Source: Stack Overflow - https://stackoverflow.com/questions/18544359/how-do-i-read-user-input-into-a-variable-in-bash
 		read -p "Continue? (Y/N): " confirm && [[ $confirm == [yY] || $confirm == [yY][eE][sS] ]] || exit 1
 		if [[ $PASSWD_ACTIVE -eq 1 ]]; then
 			read -sp "Please input your current password to continue: " passwd
@@ -501,7 +523,10 @@ empty_recyclebin() {
 		mkdir -p "$FILES_DIR"
 		log info both "Deleted all files"
 
-		sed -i '3,$d' $METADATA_FILE #apaga da 3ª À última linha
+		#deletes from the 3rd to the last lines
+		#Source: Stack Overflow - https://stackoverflow.com/questions/4881930/remove-the-last-line-from-a-file-in-bash 
+		#Source: AskUbuntu - https://askubuntu.com/questions/992213/how-to-delete-specific-lines-from-a-txt-file
+		sed -i '3,$d' $METADATA_FILE
 		log info both "Metadata has been reset"
 
 		log info both "Recycle Bin emptied"	
@@ -533,6 +558,8 @@ search_recycled() {
 	        printf "%-20s %-20s %-40s %-20s %-12s %-23s %-15s %-20s\n" "Id" "Original Name" "Original Path" "Delete Date" "File Size" "File Type" "Permissions" "Owner"
 		 	printf "%-20s %-20s %-40s %-20s %-12s %-23s %-15s %-20s\n" "--------------------" "--------------------" "----------------------------------------" "--------------------" "------------" "------------------" "--------------" "--------------------"
 	      fi
+		  	#conversion to readable format
+			#Source: Stack Overflow - https://stackoverflow.com/questions/15854332/file-size-in-human-readable-format
 			local size_to_bytes=$(($file_size * 1024))
 			local readable_filesize=$( numfmt --to=iec $size_to_bytes )
 			local print_original_name=$original_name
@@ -567,6 +594,7 @@ auto_cleanup(){
 	#at this moment, autoclean runs manually
 
 	#Get config file variables
+	#Source (of idea): AskUbuntu - https://askubuntu.com/questions/743493/best-way-to-read-a-config-file-in-bash
 	source "$CONFIG_FILE"
 	local count=0
 
@@ -586,6 +614,7 @@ auto_cleanup(){
 
 	while IFS='|' read -r file_id original_name original_path deletion_date file_size file_type permissions owner; do
 		if [[ "$file_id" != "ID" && "$file_id" != "# Recycle Bin Metadata" ]]; then
+			#Source (for getting date epochs): https://schuchert.github.io/daily%20tech/2021/02/14/SedBreakdown.html?utm
 			#get deletion date as epoch
 			local date_convert=$(echo "$deletion_date" | sed 's/_/ /; s/-/:/3; s/-/:/3')
 			local del_epoch=$(date --date="$date_convert" +"%s")
@@ -701,6 +730,8 @@ show_statistics(){
 		fi
 	done < "$METADATA_FILE"
 	
+	#conversion to readable format:
+	#Source: Stack Overflow - https://stackoverflow.com/questions/15854332/file-size-in-human-readable-format
 	local total_size_to_bytes=$(($total_size * 1024))
 	local readable_totalsize=$( numfmt --to=iec $total_size_to_bytes )
 	local avg_file_size=$(( $total_size / $total_items ))
@@ -781,10 +812,13 @@ secure_operation(){
 	log info file "secure_operation called"
 	if [[ $passwd_active -eq 0 ]]; then
 		read -p "Password is currently inactive, would you like to activate it? [Y/n]" activate
+		#Source (regex): Stack Overflow - https://stackoverflow.com/questions/48594826/bash-conditional-loop-issue-y-or-y-yes-n-or-n-no
 		if [[ ! "$activate" =~ ^([yY]|[yY][eE][sS])$ ]]; then
 			echo "Exiting"
 			return 0
 		fi
+		#read -s hides input provided
+		#Source: GeeksForGeeks - https://www.geeksforgeeks.org/linux-unix/bash-script-read-user-input/
 		read -sp "Please set your new password: " passwd
 		echo ""
 		passwd_active=1
@@ -799,6 +833,8 @@ secure_operation(){
 		read option
 
 		if [[ $option -eq 1 ]]; then
+			#read -s hides input provided
+			#Source: GeeksForGeeks - https://www.geeksforgeeks.org/linux-unix/bash-script-read-user-input/
 			read -sp "Please input your current password: " passwd
 			echo ""
 			if [[ "$passwd" == "$passwd_value" ]]; then
@@ -809,6 +845,8 @@ secure_operation(){
 				exit 1
 			fi
 		elif [[ $option -eq 2 ]]; then
+			#read -s hides input provided
+			#Source: GeeksForGeeks - https://www.geeksforgeeks.org/linux-unix/bash-script-read-user-input/
 			read -sp "Please input your current password: " passwd
 			echo ""
 			if [[ "$passwd" == "$passwd_value" ]]; then
