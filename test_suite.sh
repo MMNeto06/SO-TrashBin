@@ -81,6 +81,83 @@ test_restore_file() {
 	[ -f "$TEST_DIR/restore_test.txt" ] && echo "✓ File restored"
 }
 
+#testcase 25
+test_invalid_command(){
+	echo "=== Testcase 25: Invalid command ==="
+	setup
+	$SCRIPT "nonexistentcommand" "abc" "123"
+	assert_fail "Invalid command message was shown"
+}
+
+#testcase 26
+test_missing_parameters(){
+	echo "=== Testcase 26: Missing required paramaters==="
+	setup
+	$SCRIPT "delete"
+	assert_fail "MIssing parameters message was shown"
+}
+
+#testcase 27
+test_corrupted_metadata(){
+	echo "=== Testcase 26: Missing required paramaters==="
+	setup
+	rm ~/.recycle_bin/metadata.db
+	$SCRIPT help
+	assert_success "Metadata was repaired after being detected as corrupted"
+}
+
+test_performance_make_files(){
+	for i in {1..100}; do
+		touch "$TEST_DIR/file_$i"
+		echo "This is file number $i" >> "$TEST_DIR/file_$i"
+	done
+	echo "All test files for performance created"
+}
+
+#all performance testcases in one
+test_performace(){ #NOTA PARA SILVA: olá, eu fiz este teste numa única função por ser prático. P.S.: vandalismo
+	setup
+	echo "=== Performance Test: Delete 100 Files ==="
+	test_performance_make_files
+	start=$(date +%s.%N)
+	for i in {1..100}; do
+		$SCRIPT "delete" "$TEST_DIR/file_$i"
+		[ ! -f "$TEST_DIR/file_$i" ] && echo "✓ File removed from original location"
+	done;
+	end=$(date +%s.%N)
+	elapsed_time=$(echo $end - $start | bc)
+	assert_success "All files were successfully deleted"
+	echo "Time to delete files: $elapsed_time s"
+
+	echo "=== Performance Test: List 100 Files ==="
+	start=$(date +%s.%N)
+	$SCRIPT "list"
+	assert_success "All files were successfully listed"
+	end=$(date +%s.%N)
+	elapsed_time=$(echo $end - $start | bc)
+	echo "Time to list recycle bin: $elapsed_time s"
+	
+
+	echo "=== Performance Test: Search in 100 Files ==="
+	start=$(date +%s.%N)
+	$SCRIPT "search" "1" #Change if needed
+	assert_success "All files were successfully searched"
+	end=$(date +%s.%N)
+	elapsed_time=$(echo $end - $start | bc)
+	echo "Time to search recycle bin: $elapsed_time s"
+
+	echo "=== Performance Test: Restore the last of 100 Files ==="
+	start=$(date +%s.%N)
+	$SCRIPT "restore" "file_100"
+	assert_success "The file was successfully restored"
+	[ -f "$TEST_DIR/file_100" ] && echo "✓ Last file restored"
+	end=$(date +%s.%N)
+	elapsed_time=$(echo $end - $start | bc)
+	echo "Time to restore file_100: $elapsed_time s"
+}
+
+
+
 # Run all tests
 echo "========================================="
 echo " Recycle Bin Test Suite"
@@ -90,6 +167,9 @@ test_delete_file
 test_list_empty
 test_restore_file
 # Add more test functions here
+test_invalid_command
+test_missing_parameters
+test_performace
 teardown
 echo "========================================="
 echo "Results: $PASS passed, $FAIL failed"
