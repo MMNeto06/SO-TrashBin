@@ -993,40 +993,36 @@ The Recycle Bin is Currently Empty
 ![Test image](screenshots/testcase27_error_message.png)
 
 ### Test Case 28: Insufficient Disk Space
-**Objective:** Check that the script does not delete or restore a file that is larger than the available disk space.
+**Objective:** Check that the script neither deletes a file larger than the maximum allowed, nor restores a file larger than the available disk space.
+
+**Pre-condition:** The MAX_SIZE_MB variable must be configured
 
 **Steps:**
 1. Make a large empty file: `fallocate -l 50G largefile.bin` (50GB is enough for my disk)
-2. Make sure it was created: `ll`
-3. Attempt to delete the file with the script: `./recycle_bin.sh delete largefile.bin`
-4. Verify that an error message is displayed for deletion
-5. Remove the other file: `rm largefile.bin`
-6. Create a smalller file and delete it: `fallocate -l 30G largefile30.bin; ./recycle_bin.sh delete largefile30.bin;`
-7. Create another smaller file and delete it: `fallocate -l 10G largefile30.bin; ./recycle_bin.sh delete largefile10.bin;`
-8. Make sure both were moved: `./recycle_bin.sh list`
-9. Attempt to restore the larger one `./recycle_bin.sh restore largefile30.bin`
-10. Verify that an error message is siplayed for restoration 
+2. Attempt to delete the file with the script: `./recycle_bin.sh delete largefile.bin`
+3. Verify that an error message is displayed for deletion
+4. Increase the maximum allowed size for the recycle bin, with `./recycle_bin.sh config`
+5. Delete the file with the script: `./recycle_bin.sh delete largefile.bin`
+6. Make sure the file was moved: `./recycle_bin.sh list`
+7. Attempt to restore the large file `./recycle_bin.sh restore largefile.bin`
+8. Verify that an error message is siplayed for restoration 
 
 **Expected Result:**
 - First error message is shown for a file that is too big
-- The 2 smaller files are succesfully deleted
-- Attempting to restore the larger of those 2 shows the second error message
+- After reconfiguration, the file is succesfully deleted
+- Attempting to restore the file shows the second error message
 
 **Actual Result:** 
 - 1st error message is diplayed: "Error: Not enough space available!"
-- Both smaller files are moved to the recycle bin
+- Large file is moved to the recycle bin
 - 2nd error message is displayed: "Error: Not enough space available!"
 
 **Status:** ✅ Pass
 
 **Screenshots:** 
-- 1st part - Deletion attempt: 
+- Terminal output for both deletion and restoration attempts: 
 
-![Test image](screenshots/testcase28_output_pt1.png)
-
-- 2nd part - Restoration attempt: 
-
-![Test image](screenshots/testcase28_output_pt2.png)
+![Test image](screenshots/testcase28_output.png)
 
 ### Test Case 29: Permission Denied Errors
 **Objective:** Check that the script does not remove files or directories without system permission
