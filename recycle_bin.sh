@@ -548,7 +548,7 @@ empty_recyclebin() {
 # Function: search_recycled
 # Description: Searches for files in recycle bin
 # Parameters: $1 - search pattern
-# Returns: 0 on success
+# Returns: 0 on success, 1 on failure
 #################################################
 search_recycled() {
 	local pattern="$1"	

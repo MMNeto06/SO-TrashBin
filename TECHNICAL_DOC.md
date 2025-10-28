@@ -147,6 +147,19 @@ Restores file from recycle bin, updates the metadata, and logs the operation.
 ### `empty_recyclebin()` -> MIGUEL
 
 ### `search_recycled()`
+**Purpose:**  
+Search for files in recycle bin.
+
+**Parameters:**
+- $1: search pattern
+
+**Return Value:**  
+- `0` on success
+- `1` on failure
+
+**Notes:**  
+- Supports wildcards, by transforming pattern in regex (using sed). Ex: "*.pdf"
+- Truncates names and paths, if they are too long.
 
 ### `auto_cleanup()` -> MIGUEL
 
