@@ -4,7 +4,7 @@ Miguel dos Santos Neto (125200) & Diogo Coelho e Silva (125240)
 
 ## System Architecture diagram (TODO)
 
-## Data flow diagrams (TODO)
+## Data Flow Diagrams (TODO)
 
 ## Metadata Schema Explanation 
 ### Purpose of Metadata
@@ -220,14 +220,16 @@ Main program logic.
 
 ## Design Decisions and Rationale (TODO)
 ### 1. Language and Environment
-**- Context:** The project specification required the implementation 
+**- Context:** The project specification required the implementation to be written in Bash. 
+
+**- Rationale:** This constraint shaped the architecture around shell scripting tools and Unix utilities, ensuring portability and compatibility with Linux environments.
 
 ### 2. Recycle Bin Structure
 **- Context:** 
 The project required the development of a functional recycle bin structure to manage deleted files.
 
 **- Rationale:** 
-The following files are critical to the correct operability of our program: 
+The following files are critical to the correct behavior of the program: 
 - metadata.db: stores critical file information;
 - config: contains the recycle bin configuration parameters; 
 - recyclebin.log: holds function execution details.
@@ -243,7 +245,7 @@ The project guidelines suggested implementing file-based locking to handle concu
 
 After further research, it was concluded that using a directory-based lock was a more reliable approach, since the mkdir operation is atomic in Unix systems. This guarantees that only one process can successfully create the lock directory, effectively preventing simultaneous operations.
 
-### 4. User Interation
+### 4. User Interaction
 **- Context:**
 As the main goal of the project is the user's program utilization, we needed to ensure there was a way for the user to do it.
 
@@ -253,6 +255,41 @@ The best case scenario was developing a GUI (Graphic User Interface), however du
 In this regard, the user can interact with the program by using the terminal to run commands, which may not be easy for unexperienced users.
 
 Concerning this issue, a help function was developed in order to guide the user on program's utilization. 
+
+### 5. Error Handling and Return Codes
+**- Context:**
+Each function must return an appropriate exit code to indicate the result of its execution.
+
+**- Rationale:**
+Following Unix conventions we decided return codes should be:
+- `0` on success; 
+- `1` on failure. 
+
+All functions are designed to perform the necessary validations to ensure correct behavior and to return the corresponding exit code. This approach facilitates debugging, allows better integration with shell scripts, and ensures consistent error handling across the entire program.
+
+### 6. Log Mechanism
+**- Context:**
+The program must maintain a record of operations performed, such as file deletions, restorations, and errors, for debugging and auditing purposes, aswell as keeping the user updated.
+
+**- Rationale:**
+A dedicated log file (`recyclebin.log`) was implemented to store execution details of each function.
+
+Logging allows developers and users to track the program’s behavior and identify issues.
+
+It is also important to provide users with meaningful feedback about the operations being executed. However, minor internal function operations are not relevant to the user experience, meaning they should not be displayed.
+
+### 7. Metadata Health Check
+**- Context:**
+The integrity of the metadata file (`metadata.db`) is crucial, since it is an essencial piece to the correct behavior of the program.
+
+**- Rationale:**
+A dedicated health check function (`check_metadata_corruption()`) was implemented to ensure the metadata file integrity before performing any operation.
+
+This function should verify if the file was not deleted and if it is readable.
+In case any of the verifications fail, the file should be repaired (using `repair_metadata_file()` function).
+
+### 8. Sensitive Operations -> MIGUEL, tu vais saber explicar melhor que eu
+
 
 ## Algorithm Explanations (TODO)
 
