@@ -2,7 +2,7 @@
 ## Authors
 Miguel dos Santos Neto (125200) & Diogo Coelho e Silva (125240) 
 
-## System architecture diagram (TODO)
+## System Architecture diagram (TODO)
 
 ## Data flow diagrams (TODO)
 
@@ -41,7 +41,7 @@ Writes important information to log file and/or terminal.
 - `1` on failure
 
 **Notes:**  
-- If message type is error, preserves colors by using "echo -e".
+- If message type is error, preserves colors by using `echo -e`.
 
 ### `lock_operation()`
 **Purpose:**  
@@ -66,7 +66,7 @@ Initializes the recycle bin structure, including critical directories and files.
 - `0` on success
 
 **Notes:**  
-- If the structure is already created, checks if metadata file is corrupted, by calling `check_metadata_corruption()` function.
+- If the structure is already created, calls `check_metadata_corruption()` function to ensure metadata file is not corrupted.
 
 ### `check_metadata_corruption()`
 **Purpose:**  
@@ -78,7 +78,7 @@ Checks if metadata file is corrupted.
 - `0` on success
 
 **Notes:**  
-- If metadata file is corrupted, repairs it by calling `repair_metadata_file()` function.
+- If metadata file is corrupted, calls `repair_metadata_file()` function to repair it.
 - Logs the operation details to log file and/or user.
 
 ### `repair_metadata_file()`
@@ -164,19 +164,96 @@ Search for files in recycle bin.
 ### `auto_cleanup()` -> MIGUEL
 
 ### `check_quota()`
+**Purpose:**  
+Check if recycle bin exceeds MAX_SIZE_MB.
+
+**Parameters:** None
+
+**Return Value:**  
+- `0` on success
+- `1` on failure
+
+**Notes:**  
+- Gets MAX_SIZE_MB variable from config file.
+- If recycle bin is full, ask user permission to clear space.
+- If user agrees, calls `auto_cleanup()` to clear space.
 
 ### `show_statistics()` -> MIGUEL
 
 ### `file_preview()`
+**Purpose:**  
+Show first 10 lines for text files or file information for binary files.
+
+**Parameters:** 
+- $1: unique ID of file to preview
+
+**Return Value:**  
+- `0` on success
+- `1` on failure
+
+**Notes:**  
+- Verifies if file exists on recycle bin.
 
 ### `secure_operation()` -> MIGUEL
 
 ### `display_help()`
+**Purpose:**  
+Show usage information.
+
+**Parameters:** None
+
+**Return Value:** `0` 
 
 ### `main()`
+**Purpose:**  
+Main program logic.
 
-## Design decisions and rationale (TODO)
+**Parameters:** Command line arguments passed by the user.
 
-## Algorithm explanations (TODO)
+**Return Value:** Exit code.
 
-## Flowcharts for complex operations (TODO)
+**Notes:**  
+- Calls `lock_operation()` to prevent concurrent operations.
+- Calls `initialize_recyclebin()` to ensure recycle bin structure is correct.
+- Parses command line arguments. 
+- Invokes the appropriate function based on user's selected operation.
+
+## Design Decisions and Rationale (TODO)
+### 1. Language and Environment
+**- Context:** The project specification required the implementation 
+
+### 2. Recycle Bin Structure
+**- Context:** 
+The project required the development of a functional recycle bin structure to manage deleted files.
+
+**- Rationale:** 
+The following files are critical to the correct operability of our program: 
+- metadata.db: stores critical file information;
+- config: contains the recycle bin configuration parameters; 
+- recyclebin.log: holds function execution details.
+
+Addicionally, a `files/` directory was used in order to store deleted files.
+
+### 3. Locking Mechanism
+**- Context:** 
+The goal was to prevent concurrent operations from running simultaneously.
+
+**- Rationale:**
+The project guidelines suggested implementing file-based locking to handle concurrent operations. However, during testing, it was observed that multiple processes could create the lock file at the same time, causing race conditions and allowing concurrent executions.
+
+After further research, it was concluded that using a directory-based lock was a more reliable approach, since the mkdir operation is atomic in Unix systems. This guarantees that only one process can successfully create the lock directory, effectively preventing simultaneous operations.
+
+### 4. User Interation
+**- Context:**
+As the main goal of the project is the user's program utilization, we needed to ensure there was a way for the user to do it.
+
+**- Rationale:**
+The best case scenario was developing a GUI (Graphic User Interface), however due to lack of time and knowledge, we were not able to. 
+
+In this regard, the user can interact with the program by using the terminal to run commands, which may not be easy for unexperienced users.
+
+Concerning this issue, a help function was developed in order to guide the user on program's utilization. 
+
+## Algorithm Explanations (TODO)
+
+## Flowcharts for Complex Operations (TODO)

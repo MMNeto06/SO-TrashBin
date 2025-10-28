@@ -111,7 +111,7 @@ log(){
 }
 
 #####################################################
-# Function: check_metadata_corruption
+# Function: check_metadata_corruption (OPTIONAL)
 # Description: Checks if metadata file is corrupted
 # Parameters: none
 # Returns: 0 on success
@@ -128,7 +128,7 @@ check_metadata_corruption(){
 }
 
 #######################################################
-# Function: repair_metadata_file
+# Function: repair_metadata_file (OPTIONAL)
 # Description: Creates a new metadata file if
 # recycle bin is empty, else, empties out recycle bin
 # Parameters: none
@@ -772,15 +772,15 @@ show_statistics(){
 # Function: file_preview (OPTIONAL)
 # Description: Show first 10 lines for text files or file information for binary files
 # Parameters: $1 - unique ID of file to preview
-# Returns: 0 on success
+# Returns: 0 on success, 1 on failure
 ########################################################################################
 file_preview(){
 	local file_id="$1"
 	
 	# Validate input
 	if [ -z "$file_id" ]; then
-	log error both "${RED}Error: No file id specified${NC}"
-	return 1
+		log error both "${RED}Error: No file id specified${NC}"
+		return 1
 	fi
 		
 	log info file "file_preview function called with: $file_id"
@@ -789,8 +789,8 @@ file_preview(){
 	
 	# Check if file exists
 	if [ ! -e "$file_path" ]; then
-	log error both "${RED}Error: File '$file_path' does not exist${NC}"
-	return 1
+		log error both "${RED}Error: File '$file_path' does not exist${NC}"
+		return 1
 	fi
 	
 	if file "$file_path" | grep -q text
@@ -811,12 +811,12 @@ file_preview(){
 	return 0
 }
 
-#################################################
+##################################################################
 # Function: secure_operation
 # Description: Adds password protection for sensitive operations
 # Parameters: None
 # Returns: 0 on success, exit 1 if cancelled
-#################################################
+##################################################################
 secure_operation(){
 	source "$CONFIG_FILE"
 	local passwd_active=$PASSWD_ACTIVE

@@ -80,6 +80,8 @@ The following optional features were implemented:
 - preview_file();
 - secure_operation();
 - lock_operation();
+- check_metadata_corruption(); 
+- repair_metadata_file();
 	
 ## Configuration
 
@@ -133,42 +135,46 @@ We are unaware of any limitation or bug with our system.
 To accomplish this project, several searches and queries were made on several sources, with the goal to aquire the necessary knowledge about commands and techniques fundammental to it's development.
 The consulted sources are listed below, duly asscoiated to the development stages in which they were applied (that is, to the implemented features)
 
-delete_file(): 
+`delete_file()`: 
 - silence mv: https://unix.stackexchange.com/questions/87605/is-there-a-way-to-make-mv-fail-silently
 
-list_recycled():
+`list_recycled()`:
 - read line by line: https://stackoverflow.com/questions/10929453/read-a-file-line-by-line-assigning-the-value-to-a-variable
 - readable file size (used in stats and search too): https://stackoverflow.com/questions/15854332/file-size-in-human-readable-format
 
-restore_file():
+`restore_file()`:
 - silence mv: https://unix.stackexchange.com/questions/87605/is-there-a-way-to-make-mv-fail-silently
 - remove lines: https://stackoverflow.com/questions/5410757/how-to-delete-from-a-text-file-all-lines-that-contain-a-specific-string
 - free stdin: https://unix.stackexchange.com/questions/460266/use-read-as-a-prompt-inside-a-while-loop-driven-by-read
 
-search_recycled():
+`search_recycled()`:
 - grep to search patterns: https://www.w3schools.com/bash/bash_grep.php
 - regex with sed: https://stackoverflow.com/questions/29613304/is-it-possible-to-escape-regex-metacharacters-reliably-with-sed
 
-empty_recyclebin():
+`empty_recyclebin()`:
  - confirmation: https://stackoverflow.com/questions/18544359/how-do-i-read-user-input-into-a-variable-in-bash
  - hot to use sed: https://stackoverflow.com/questions/4881930/remove-the-last-line-from-a-file-in-bash & https://askubuntu.com/questions/992213/how-to-delete-specific-lines-from-a-txt-file
 
-show_statistics(): none
+`show_statistics()`: none
 
-auto_cleanup():
+`auto_cleanup()`:
 - config file source idea: https://askubuntu.com/questions/743493/best-way-to-read-a-config-file-in-bash
 - date epoch: https://schuchert.github.io/daily%20tech/2021/02/14/SedBreakdown.html?utm 
 
-check_quota(): none
+`check_quota()`: none
 
-file_preview(): none 
+`file_preview()`: none 
 
-secure_operation():
+`secure_operation()`:
 - read -s: https://www.geeksforgeeks.org/linux-unix/bash-script-read-user-input/
 - regex explantion: https://stackoverflow.com/questions/48594826/bash-conditional-loop-issue-y-or-y-yes-n-or-n-no
 
-lock_operation():
+`lock_operation()`:
 - locking shell script: https://unix.stackexchange.com/questions/22044/correct-locking-in-shell-scripts
+
+`check_metadata_corruption()`: none
+
+`repair_metadata_file()`: none
 
 ### Usage of LLMs and other notes
 It's important to note that LLMs were used as a support tool to comprehend concepts, to study functionalities of commands identified during research and any debugging that ocurred during the development.
