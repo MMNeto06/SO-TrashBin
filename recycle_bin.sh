@@ -201,14 +201,14 @@ delete_file() {
 		fi
 		
 		# Check if file exists
-		if [ ! -e "$file_path" ]; then
+		if [ ! -e "$file_path" ] && [ ! -L "$file_path" ]; then
 			log error both "${RED}Error: File '$file_path' does not exist${NC}"
 			exit_code=1
 			continue
 		fi
 
 		# Check file permissions
-		if [ ! -r "$file_path" ] || [ ! -w "$file_path" ]; then
+		if [ ! -L "$file_path" ] && { [ ! -r "$file_path" ] || [ ! -w "$file_path" ]; }; then
 			log error both "${RED}Error: Permission denied!${NC}"
 			return 1
 		fi
@@ -460,7 +460,10 @@ restore_file() {
 				}
 				
 				log info file "Restoring permissions..."
-				chmod "$permissions" "$original_dir/$restore_name"
+				if [[ ! -L "$original_dir/$restore_name" ]]
+				then 
+					chmod "$permissions" "$original_dir/$restore_name"
+				fi
 				
 				# Delete lines from file 
 				# Source: Stack Overflow - https://stackoverflow.com/questions/5410757/how-to-delete-from-a-text-file-all-lines-that-contain-a-specific-string

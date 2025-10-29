@@ -4,6 +4,7 @@
 SCRIPT="./recycle_bin.sh"
 TEST_DIR="test_data"
 CONFIG=~/.recycle_bin/config #necessary for some tests
+METADATA_FILE=~/.recycle_bin/metadata.db # necessary for testcase 41 & 42 (get id)
 PASS=0
 FAIL=0
 
@@ -187,64 +188,155 @@ test_help(){
 
 }
 
-#testcase 13 - SILVA
+#testcase 13
 test_delete_non_existent_file(){
-	return 0
+	echo "=== Testcase 13: Delete Non-Existent File ==="
+	setup
+	$SCRIPT delete "$TEST_DIR/nonExistentFile"
+	assert_fail "File does not exist"
 }
 
-#testcase 14 - SILVA
+#testcase 14 
 test_delete_file_without_permission(){
-	return 0
+	echo "=== Testcase 14: Delete File Without Permissions ==="
+	setup
+	touch "$TEST_DIR/protectedFile"
+	chmod 000 "$TEST_DIR/protectedFile"
+	$SCRIPT delete "$TEST_DIR/protectedFile"
+	assert_fail "Insufficient permissions"
 }
 
-#testcase 15 - SILVA
-test_restore_original_location_has_same_filename(){
-	return 0
+#testcase 15 
+test_restore_original_location_has_same_filename_success(){
+	echo "=== Testcase 15: Original Location has Same Filename ==="
+	setup
+	touch "$TEST_DIR/testFile"
+	$SCRIPT delete $TEST_DIR/testFile
+	touch "$TEST_DIR/testFile"
+	echo "assert_success when user selects Overwrite or Restore with modified name option"
+	$SCRIPT restore testFile
+	assert_success "Overwrite/Modified name"
 }
 
-#testcase 16 - SILVA
+test_restore_original_location_has_same_filename_failure(){
+	setup
+	touch "$TEST_DIR/testFile"
+	$SCRIPT delete "$TEST_DIR/testFile"
+	touch "$TEST_DIR/testFile"
+	echo "assert_fail when user selects Cancel operation option" 
+	$SCRIPT restore testFile
+	assert_fail "Cancel Operation"
+}
+
+#testcase 16 
 test_restore_nonexistent_fileid(){
-	return 0
+	echo "=== Testcase 16: Restore Non-Existent File Id ==="
+	setup
+	$SCRIPT restore fakeid_1234
+	assert_fail "No match found"
 }
 
-#testcase 17 - SILVA
+#testcase 17 
 test_filename_with_spaces(){
-	return 0
+	echo "=== Testcase 17: Handle Filename with Spaces ==="
+	setup
+	touch "$TEST_DIR"/"file name with spaces"
+	$SCRIPT delete "$TEST_DIR"/"file name with spaces"
+	assert_success "Filename with spaces was deleted"
+	$SCRIPT restore "file name with spaces"
+	assert_success "Filename with spaces was restored"
 }
 
-#testcase 18 - SILVA
+#testcase 18
 test_filename_with_special_characters(){
-	return 0
+	echo "=== Testcase 18: Handle Filename with Special Characters ==="
+	setup
+	touch "$TEST_DIR"/'file@#$%^&*()'
+	$SCRIPT delete "$TEST_DIR"/'file@#$%^&*()'
+	assert_success "Filename with special characters was deleted"
+	$SCRIPT restore 'file@#$%^&*()'
+	assert_success "Filename with special characters was restored"
 }
 
-#testcase 19 - SILVA
+#testcase 19 
 test_long_filename(){
-	return 0
+	echo "=== Testcase 19: Handle Very Long Filenames ==="
+	setup
+	touch "$TEST_DIR/"$(printf 'a%.0s' {1..250})""
+	$SCRIPT delete "$TEST_DIR/"$(printf 'a%.0s' {1..250})""
+	assert_success "Very long filename was deleted"
+	$SCRIPT restore "$(printf 'a%.0s' {1..250})"
+	assert_success "Very long filename was restored"
 }
 
-#testcase 20 - SILVA
+#testcase 20
 test_very_large_file(){
-	return 0
+	echo "=== Testcase 20: Handle Very Large Files ==="
+	setup
+	fallocate -l 150M "$TEST_DIR/largeTestFile"
+	$SCRIPT delete "$TEST_DIR/largeTestFile"
+	assert_success "Very large file was deleted"
+	$SCRIPT restore largeTestFile
+	assert_success "Very large file was restored"
 }
 
-#testcase 21 - SILVA
+#testcase 21
 test_symbolic_links(){
-	return 0
+	echo "=== Testcase 21: Handle Symbolic Links ==="
+	setup
+	touch "$TEST_DIR/testFile"
+	ln -s "$TEST_DIR/testFile" "$TEST_DIR/linkToTestFile"
+
+	$SCRIPT delete "$TEST_DIR/linkToTestFile"
+
+	if [[ -e "$TEST_DIR/testFile" ]]
+	then 
+		assert_success "Link was not followed"
+	fi
+
+	$SCRIPT restore linkToTestFile
+
+	if [[ -L "$TEST_DIR/linkToTestFile" ]]
+	then 
+		assert_success "Link was restored"
+	fi 
 }
 
-#testcase 22 - SILVA
+#testcase 22 
 test_hidden_file(){
-	return 0
+	echo "=== Testcase 22: Handle Hidden Files ==="
+	setup
+	touch "$TEST_DIR/.hiddenFile"
+	$SCRIPT delete "$TEST_DIR/.hiddenFile"
+	assert_success "Hidden file was moved"
+	$SCRIPT restore .hiddenFile
+	assert_success "Hidden file was restored"
 }
 
-#testcase 23 - SILVA
+#testcase 23
 test_delete_from_different_directories(){
-	return 0
+	echo "=== Testcase 23: Delete Files from Different Directories ==="
+	setup
+	mkdir -p "$TEST_DIR/testDir1"
+	mkdir -p "$TEST_DIR/testDir2"
+	touch "$TEST_DIR/testDir1/testFile1" "$TEST_DIR/testDir2/testFile2"
+	$SCRIPT delete "$TEST_DIR/testDir1/testFile1" "$TEST_DIR/testDir2/testFile2"
+	assert_success "Files from different directories were moved"
+	$SCRIPT restore testFile1
+	$SCRIPT restore testFile2
+	assert_success "Files from different directories were restored"
 }
 
-#testcase 24 - SILVA
+#testcase 24
 test_restore_to_readonly_directory(){
-	return 0
+	echo "=== Testcase 24: Restore Files to Read-Only Directories ==="
+	setup
+	mkdir -p "$TEST_DIR/testDir"
+	touch "$TEST_DIR/testDir/testFile"
+	$SCRIPT delete "$TEST_DIR/testDir/testFile"
+	chmod -wx "$TEST_DIR/testDir"
+	$SCRIPT restore testFile
+	assert_fail "File was not restored to Read-Only Directory"
 }
 
 #testcase 25
@@ -257,7 +349,7 @@ test_invalid_command(){
 
 #testcase 26
 test_missing_parameters(){
-	echo "=== Testcase 26: Missing required paramaters==="
+	echo "=== Testcase 26: Missing required paramaters ==="
 	setup
 	$SCRIPT "delete"
 	assert_fail "Missing parameters message was shown"
@@ -265,7 +357,7 @@ test_missing_parameters(){
 
 #testcase 27
 test_corrupted_metadata(){
-	echo "=== Testcase 27: Corrupted metadata==="
+	echo "=== Testcase 27: Corrupted metadata ==="
 	setup
 	$SCRIPT #initialize script
 	rm ~/.recycle_bin/metadata.db
@@ -275,7 +367,7 @@ test_corrupted_metadata(){
 
 #testcase 28
 test_insufficient_disk_space(){
-	echo "=== Testcase 28: Insufficient disk space==="
+	echo "=== Testcase 28: Insufficient disk space ==="
 	setup
 	$SCRIPT list #enough to initialize
 	source $CONFIG
@@ -292,7 +384,7 @@ test_insufficient_disk_space(){
 
 #testcase 29
 test_permission_denied_errors(){
-	echo "=== Testcase 29: Permission denied errors==="
+	echo "=== Testcase 29: Permission denied errors ==="
 	setup
 	mkdir "$TEST_DIR/testDir"
 	touch "$TEST_DIR/testDir/test"
@@ -307,7 +399,7 @@ test_permission_denied_errors(){
 
 #testcase 30
 test_delete_recycle_bin_itself(){
-	echo "=== Testcase 30: Delete recycle bin itself==="
+	echo "=== Testcase 30: Delete recycle bin itself ==="
 	setup
 	$SCRIPT
 	$SCRIPT delete ~/.recycle_bin
@@ -315,8 +407,24 @@ test_delete_recycle_bin_itself(){
 }
 
 #testcase 31
+#Note: Either one of the processes could be blocked, it is random.
 test_concurrent_operations(){
-	return 0
+	echo "=== Testcase 31: Handle Concurrent Operations ==="
+	setup
+	touch "$TEST_DIR/testFile1" "$TEST_DIR/testFile2"
+	$SCRIPT delete "$TEST_DIR/testFile1" &
+	$SCRIPT delete "$TEST_DIR/testFile2" &
+	wait
+
+	if [[ -f "$TEST_DIR/testFile1" ]]
+	then 
+		assert_success "Concurrent operations were denied"
+	elif [[ -f "$TEST_DIR/testFile2" ]]
+	then
+		assert_success "Concurrent operations were denied"
+	else 
+		echo "${RED}Both files were moved.${NC}"
+	fi
 }
 
 #all performance testcases in one so testcase 32-35
@@ -441,19 +549,63 @@ test_password(){
 
 }
 
-#testcase 42 - SILVA
+#testcase 42
 test_preview_txt(){
-	return 0
+	echo "=== Testcase 42: Preview First 10 Lines of File ==="
+	setup
+	local n=1
+	local deleted_file_id=""
+
+	while ((n < 13))
+	do 
+		echo "linha $n" >> "$TEST_DIR/testFile"
+		n=$(($n+1))
+	done
+
+	$SCRIPT delete "$TEST_DIR/testFile"
+	
+	while IFS='|' read -r file_id original_name original_path deletion_date file_size file_type permissions owner
+	do 
+		deleted_file_id=$file_id
+	done < <(tail -n +3 "$METADATA_FILE")
+
+	$SCRIPT preview "$deleted_file_id"
+	
+	assert_success "First 10 lines are displayed"
 }
 
-#testcase 43 - SILVA
+#testcase 43
 test_preview_binary(){
-	return 0
+	echo "=== Testcase 43: View Information of a Binary File ==="
+	setup
+	echo -ne "\x00\x01\x02\x03" > "$TEST_DIR/testBinaryFile"
+
+	$SCRIPT delete "$TEST_DIR/testBinaryFile"
+	
+	while IFS='|' read -r file_id original_name original_path deletion_date file_size file_type permissions owner
+	do 
+		deleted_file_id=$file_id
+	done < <(tail -n +3 "$METADATA_FILE")
+
+	$SCRIPT preview "$deleted_file_id"
+	
+	assert_success "Binary file information is displayed"
 }
 
-#testcase 44 - SILVA
+#testcase 44 
+#Note: User must agree to space clearance
 test_quota(){
-	return 0
+	echo "=== Testcase 44: Check Recycle Bin Size is Within Limits ==="
+	setup
+	fallocate -l 5M "$TEST_DIR/testFile"
+	$SCRIPT delete "$TEST_DIR/testFile"
+	sed -i '5d' $CONFIG
+	sed -i '5i\MAX_SIZE_MB=0' $CONFIG
+	sed -i '5i\RETENTION_DAYS=0' $CONFIG
+
+	$SCRIPT quota
+
+	assert_success "Quota check was successful"
 }
 
 # Run all tests
@@ -474,7 +626,8 @@ test_search_failure
 test_help
 test_delete_non_existent_file
 test_delete_file_without_permission
-test_restore_original_location_has_same_filename
+test_restore_original_location_has_same_filename_success
+test_restore_original_location_has_same_filename_failure
 test_restore_nonexistent_fileid
 test_filename_with_spaces
 test_filename_with_special_characters

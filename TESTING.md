@@ -417,7 +417,7 @@ The Recycle Bin is Currently Empty
 **Steps:**
 1. Run (Create a file on a protected directory): `touch protectedFile`
 2. Run (Remove permissions): `chmod 000 protectedFile`
-3. Run: `./recycle_bin.sh delete /protectedFile`
+3. Run: `./recycle_bin.sh delete protectedFile`
 4. Verify that an error message is displayed
 5. Verify that the file was not moved from it's current directory
 6. Run: `./recycle_bin.sh list`
@@ -1408,7 +1408,7 @@ Autoclean deleted 1 files
 ![Output](screenshots/testcase41_output.png)
 
 
-### Test Case 42: Preview first 10 lines of file
+### Test Case 42: Preview First 10 Lines of File
 **Objective:** Verify that a file can be previewed (first 10 lines)
 
 **Steps:**
@@ -1431,7 +1431,7 @@ Autoclean deleted 1 files
 
 ![Output](screenshots/testcase42_output.png)
 
-### Test Case 43: View information of a binary file
+### Test Case 43: View Information of a Binary File
 **Objective:** Verify that information of a binary file can be consulted
 
 **Steps:**
@@ -1454,7 +1454,7 @@ Autoclean deleted 1 files
 
 ![Output](screenshots/testcase43_output.png)
 
-### Test Case 44: Check recycle bin size is within limits
+### Test Case 44: Check Recycle Bin Size is Within Limits
 **Objective:** Verify that recycle bin size is within limits
 
 **Steps:**
@@ -1490,9 +1490,11 @@ Autoclean deleted 1 files
 
 **Screenshots:** 
 - Full Recycle Bin:
+
 ![Full](screenshots/testcase44_full.png)
 
 - Not Full Recycle Bin:
+
 ![Not Full](screenshots/testcase44_not_full.png)
 
 
