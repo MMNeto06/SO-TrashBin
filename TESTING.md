@@ -304,7 +304,7 @@ The Recycle Bin is Currently Empty
 1. Create some test files with the `touch` command
 2. Delete them with `./recycle_bin.sh delete file1 file2 ...`
 3. Verify that they were moved with `./recycle_bin.sh list`
-4. Empty the whole bin with `./recycle_bon.sh empty`
+4. Empty the whole bin with `./recycle_bin.sh empty`
 5. Verify that files folder is now empty
 6. Verify thar metadata has also been emptied
 7. Run `.recycle_bin.sh list` after to check that it is empty
@@ -972,6 +972,8 @@ The Recycle Bin is Currently Empty
 ### Test Case 27: Corrupted Metadata File
 **Objective:** Verify that the script correctly handles corrupted metadata file
 
+**Pre-condition:** Recycle bin must be initialized
+
 **Steps:**
 1. Run (Remove metadata file): `rm ~/.recycle_bin/metadata.db`
 2. Run any script function: `./recycle_bin.sh help` (for example)
@@ -1005,7 +1007,7 @@ The Recycle Bin is Currently Empty
 5. Delete the file with the script: `./recycle_bin.sh delete largefile.bin`
 6. Make sure the file was moved: `./recycle_bin.sh list`
 7. Attempt to restore the large file `./recycle_bin.sh restore largefile.bin`
-8. Verify that an error message is siplayed for restoration 
+8. Verify that an error message is displayed for restoration 
 
 **Expected Result:**
 - First error message is shown for a file that is too big
@@ -1059,6 +1061,8 @@ mv: impossível mover &apos;/home/mmneto06/SO/SO-TrashBin/.test&apos; para &apos
 
 ### Test Case 30: Attempting to Delete Recycle Bin Itself
 **Objective:** Check that the script stops user from deleting the recycle bin itself
+
+**Pre-condition:** Recycle bin must be initialized
 
 **Steps:**
 1. Run the command: `./recycle_bin.sh delete ~/.recycle_bin`
@@ -1245,7 +1249,7 @@ OR
 **Steps:**
 0. Alter the configuration file, easily accessible with `./recycle_bin.sh config` 
 1. Create and delete a file: `touch test.txt; ./recycle_bin delete test.txt`
-2. Ensure that the file was deleted: `./recycle_bin.sh list`
+2. Ensure that the file was deleted
 3. Run auto-cleanup: `./recycle_bin.sh autoclean`
 4. Check that the bin has been emptied of the old files
 
@@ -1275,7 +1279,7 @@ Autoclean deleted 1 files
 
 **Steps:**
 1. Create and delete multiple files: `touch test.txt; ./recycle_bin delete test.txt; ...`
-2. Ensure that the files were deleted: `./recycle_bin.sh list`
+2. Ensure that the files were deleted
 3. Run the command: `./recycle_bin.sh stats`
 4. Check that the statistics are correctly displayed
 

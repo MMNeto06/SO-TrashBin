@@ -3,6 +3,7 @@
 # Test Suite for Recycle Bin System
 SCRIPT="./recycle_bin.sh"
 TEST_DIR="test_data"
+CONFIG=~/.recycle_bin/config #necessary for some tests
 PASS=0
 FAIL=0
 
@@ -45,7 +46,7 @@ assert_fail() {
 # Test Cases
 #testcase 1
 test_initialization() {
-	echo "=== Test: Initialization ==="
+	echo "=== Testcase 1: Initialization ==="
 	setup
 	$SCRIPT help > /dev/null
 	assert_success "Initialize recycle bin"
@@ -55,27 +56,50 @@ test_initialization() {
 
 #testcase 2
 test_delete_file() {
-	echo "=== Test: Delete File ==="
+	echo "=== Testcase 2: Delete File ==="
 	setup
 	echo "test content" > "$TEST_DIR/test.txt"
 	$SCRIPT delete "$TEST_DIR/test.txt"
 	assert_success "Delete existing file"
-	[ ! -f "$TEST_DIR/test.txt" ] && echo "✓ File removed from original
-	location"
+	[ ! -f "$TEST_DIR/test.txt" ] && echo "✓ File removed from original location"
 }
 
-#testcase 3 - MIGUEL mas roubei do silva
-test_delete_files(){} #delete multiple file in one line
+#testcase 3
+test_delete_multiple_files(){ 
+	echo "=== Testcase 3: Delete multiple files with one command ==="
+	setup
+	echo "test content" > "$TEST_DIR/test1.txt"
+	echo "test content" > "$TEST_DIR/test2.txt"
+	echo "test content" > "$TEST_DIR/test3.txt"
+	$SCRIPT delete "$TEST_DIR/test1.txt" "$TEST_DIR/test2.txt" "$TEST_DIR/test3.txt"
+	assert_success "Deleted existing files"
+	[ ! -f "$TEST_DIR/test1.txt" ] && echo "✓ test1.txt removed from original location"
+	[ ! -f "$TEST_DIR/test2.txt" ] && echo "✓ test2.txt removed from original location"
+	[ ! -f "$TEST_DIR/test3.txt" ] && echo "✓ test3.txt removed from original location"
+} 
 
-#testcase 4 - MIGUEL mas roubei do silva
-test_delete_empty_directory(){}
+#testcase 4
+test_delete_empty_directory(){
+	echo "=== Testcase 4: Delete an empty directory ==="
+	setup
+	mkdir -p "$TEST_DIR/test"
+	$SCRIPT delete "$TEST_DIR/test"
+	assert_success "Deleted directory"
+	[ ! -d "$TEST_DIR/test" ] && echo "✓ Directory removed from original location"
+	$SCRIPT "list" "--detailed"
+	if $SCRIPT "list" "--detailed" | grep -q "test"; then
+    	echo "✓ 'test' found in output"
+	fi
+}
 
-#testcase 5 - MIGUEL mas roubei do silva
-test_delete_directory(){}
+#testcase 5
+test_delete_directory(){
+	return 0
+}
 
 #testcase 6
 test_list_empty() {
-	echo "=== Test: List Empty Bin ==="
+	echo "=== Testcase 6: List Empty Bin ==="
 	setup
 	$SCRIPT list | grep -q "Empty"
 	assert_success "List empty recycle bin"
@@ -83,7 +107,7 @@ test_list_empty() {
 
 #testcase 7
 test_restore_file() {
-	echo "=== Test: Restore File ==="
+	echo "=== Testcase 7: Restore File ==="
 	setup
 	echo "test" > "$TEST_DIR/restore_test.txt"
 	$SCRIPT delete "$TEST_DIR/restore_test.txt"
@@ -94,56 +118,134 @@ test_restore_file() {
 	[ -f "$TEST_DIR/restore_test.txt" ] && echo "✓ File restored"
 }
 
-#testcase 8 - MIGUEL mas roubei do silva
-test_restore_to_missing_path(){}
+#testcase 8
+test_restore_to_missing_path(){
+	echo "=== Testcase 8: Restore File to missing path ==="
+	setup
+	mkdir "$TEST_DIR/testDir"
+	touch "$TEST_DIR/testDir/testFile"
+	$SCRIPT delete "$TEST_DIR/testDir/testFile"
+	rmdir "$TEST_DIR/testDir"
+	[ ! -d "$TEST_DIR/testDir" ] && echo "✓ Test Directory removed"
+	$SCRIPT restore "testFile"
+	assert_success "File restored"
+	[ -f "$TEST_DIR/testDir/restore_test.txt" ] && echo "✓ File restored"
+}
 
-#tescase 9 - MIGUEL
-test_empty_bin(){}
+#tescase 9
+test_empty_bin(){
+	echo "=== Testcase 9: Empty recycle bin ==="
+	setup
+	echo "test content" > "$TEST_DIR/test1.txt"
+	echo "test content" > "$TEST_DIR/test2.txt"
+	echo "test content" > "$TEST_DIR/test3.txt"
+	$SCRIPT delete "$TEST_DIR/test1.txt" "$TEST_DIR/test2.txt" "$TEST_DIR/test3.txt"
+	[ ! -f "$TEST_DIR/test1.txt" ] && echo "✓ File removed from original location"
+	[ ! -f "$TEST_DIR/test2.txt" ] && echo "✓ File removed from original location"
+	[ ! -f "$TEST_DIR/test3.txt" ] && echo "✓ File removed from original location"
+	if $SCRIPT "list" | grep -q "Number of Items in Recycle Bin: 3"; then
+    	echo "✓ All files found in bin"
+	fi
+	$SCRIPT empty --force #done to skip confirmation
+	assert_success "Recycle bin emptied"
+	if $SCRIPT "list" | grep -q "The Recycle Bin is Currently Empty"; then
+    	echo "✓ Metadata and files folder have been reset"
+	fi
+}
 
-#testcase 10 - MIGUEL mas roubei do silva
-test_search_success(){}
+#testcase 10
+test_search_success(){
+	echo "=== Testcase 10: Search File (Success) ==="
+	setup
+	echo "test content" > "$TEST_DIR/testFile"
+	$SCRIPT delete "$TEST_DIR/testFile"
+	[ ! -f "$TEST_DIR/testFile" ] && echo "✓ File removed from original location"
+	$SCRIPT search testFile
+	assert_success "testFile was found with search"
+}
 
-#testcase 11 - MIGUEL mas roubei do silva
-test_search_failure(){}
+#testcase 11
+test_search_failure(){
+	echo "=== Testcase 11: Search File (Failure) ==="
+	setup
+	echo "test content" > "$TEST_DIR/testFile"
+	$SCRIPT delete "$TEST_DIR/testFile"
+	[ ! -f "$TEST_DIR/testFile" ] && echo "✓ File removed from original location"
+	$SCRIPT search nonExistentFile
+	assert_fail "No files were found with pattern 'nonExistentFile' using search"
+}
 
-#testcase 12 - MIGUEL mais roubei do silva
-test_help(){}
+#testcase 12
+test_help(){
+	echo "=== Testcase 12: Display Help ==="
+	setup
+	$SCRIPT help
+	assert_success "Display help"
+	if $SCRIPT "help" | grep -q "Linux Recycle Bin - Usage Guide"; then
+    	echo "✓ Help message was completely displayed"
+	fi
+
+}
 
 #testcase 13 - SILVA
-test_delete_non_existent_file(){}
+test_delete_non_existent_file(){
+	return 0
+}
 
 #testcase 14 - SILVA
-test_delete_file_without_permission(){}
+test_delete_file_without_permission(){
+	return 0
+}
 
 #testcase 15 - SILVA
-test_restore_original_location_has_same_filename(){}
+test_restore_original_location_has_same_filename(){
+	return 0
+}
 
 #testcase 16 - SILVA
-test_restore_nonexistent_fileid(){}
+test_restore_nonexistent_fileid(){
+	return 0
+}
 
 #testcase 17 - SILVA
-test_filename_with_spaces(){}
+test_filename_with_spaces(){
+	return 0
+}
 
 #testcase 18 - SILVA
-test_filename_with_special_characters(){}
+test_filename_with_special_characters(){
+	return 0
+}
 
 #testcase 19 - SILVA
-test_long_filename(){}
+test_long_filename(){
+	return 0
+}
 
 #testcase 20 - SILVA
-test_very_large_file(){}
+test_very_large_file(){
+	return 0
+}
 
 #testcase 21 - SILVA
-test_symbolic_links(){}
+test_symbolic_links(){
+	return 0
+}
 
 #testcase 22 - SILVA
-test_hidden_file(){}
+test_hidden_file(){
+	return 0
+}
 
 #testcase 23 - SILVA
-test_delete_from_different_directories(){}
+test_delete_from_different_directories(){
+	return 0
+}
 
 #testcase 24 - SILVA
-test_restore_to_readonly_directory(){}
+test_restore_to_readonly_directory(){
+	return 0
+}
 
 #testcase 25
 test_invalid_command(){
@@ -158,34 +260,70 @@ test_missing_parameters(){
 	echo "=== Testcase 26: Missing required paramaters==="
 	setup
 	$SCRIPT "delete"
-	assert_fail "MIssing parameters message was shown"
+	assert_fail "Missing parameters message was shown"
 }
 
 #testcase 27
 test_corrupted_metadata(){
-	echo "=== Testcase 26: Missing required paramaters==="
+	echo "=== Testcase 27: Corrupted metadata==="
 	setup
+	$SCRIPT #initialize script
 	rm ~/.recycle_bin/metadata.db
 	$SCRIPT help
 	assert_success "Metadata was repaired after being detected as corrupted"
 }
 
-#testcase 28 - MIGUEL
-test_insufficient_disk_space(){}
+#testcase 28
+test_insufficient_disk_space(){
+	echo "=== Testcase 28: Insufficient disk space==="
+	setup
+	$SCRIPT list #enough to initialize
+	source $CONFIG
+	fallocate -l 50G "$TEST_DIR/largefile.bin"
+	$SCRIPT delete "$TEST_DIR/largefile.bin"
+	assert_fail "Large file was not moved as it exceeds quota"
+	sed -i '5d' $CONFIG
+	sed -i '5i\MAX_SIZE_MB=100000' $CONFIG
+	$SCRIPT delete "$TEST_DIR/largefile.bin"
+	$SCRIPT list
+	$SCRIPT restore "largefile.bin"
+	assert_fail "Large file was not restored due to lack of space"
+}
 
-#testcase 29 - MIGUEL
-test_permission_denied_errors(){}
+#testcase 29
+test_permission_denied_errors(){
+	echo "=== Testcase 29: Permission denied errors==="
+	setup
+	mkdir "$TEST_DIR/testDir"
+	touch "$TEST_DIR/testDir/test"
+	chmod 0 "$TEST_DIR/testDir"
+	echo "✓ File without permission created"
+	$SCRIPT delete "$TEST_DIR/testDir/test"
+	assert_fail "Test file failed to be deleted due to lack of permission"
+	$SCRIPT delete "$TEST_DIR/testDir"
+	assert_fail "Test directory failed to be deleted due to lack of permission"
+	chmod 755 "$TEST_DIR/testDir"
+}
 
-#testcase 30 - MIGUEL
-test_delete_recycle_bin_itself(){}
+#testcase 30
+test_delete_recycle_bin_itself(){
+	echo "=== Testcase 30: Delete recycle bin itself==="
+	setup
+	$SCRIPT
+	$SCRIPT delete ~/.recycle_bin
+	assert_fail "Recycle bin itself was not deleted"
+}
 
-#testcase 31 - SILVA
-test_concurrent_operations(){}
+#testcase 31
+test_concurrent_operations(){
+	return 0
+}
 
 #all performance testcases in one so testcase 32-35
 test_performace(){ 
+	echo "=== Performance Tests ==="
 	setup
-	echo "=== Performance Test: Delete 100 Files ==="
+	echo "=== Testcase 32: Delete 100 Files ==="
 	#making the files
 	for i in {1..100}; do
 		touch "$TEST_DIR/file_$i"
@@ -202,7 +340,7 @@ test_performace(){
 	assert_success "All files were successfully deleted"
 	echo "Time to delete files: $elapsed_time s"
 
-	echo "=== Performance Test: List 100 Files ==="
+	echo "=== Testcase 33: List 100 Files ==="
 	start=$(date +%s.%N)
 	$SCRIPT "list"
 	assert_success "All files were successfully listed"
@@ -211,7 +349,7 @@ test_performace(){
 	echo "Time to list recycle bin: $elapsed_time s"
 	
 
-	echo "=== Performance Test: Search in 100 Files ==="
+	echo "=== Testcase 34: Search in 100 Files ==="
 	start=$(date +%s.%N)
 	$SCRIPT "search" "1" #Change if needed
 	assert_success "All files were successfully searched"
@@ -219,7 +357,7 @@ test_performace(){
 	elapsed_time=$(echo $end - $start | bc)
 	echo "Time to search recycle bin: $elapsed_time s"
 
-	echo "=== Performance Test: Restore the last of 100 Files ==="
+	echo "=== Testcase 35: Restore the last of 100 Files ==="
 	start=$(date +%s.%N)
 	$SCRIPT "restore" "file_100"
 	assert_success "The file was successfully restored"
@@ -229,32 +367,94 @@ test_performace(){
 	echo "Time to restore file_100: $elapsed_time s"
 }
 
-#testcase 36 - MIGUEL
-test_autoclean(){}
+#testcase 36
+test_autoclean(){
+	echo "=== Testcase 36: Autoclean the recycle bin ==="
+	setup
+	source $CONFIG
+	sed -i '4d' $CONFIG
+	sed -i '4i\RETENTION_DAYS=30' $CONFIG
+	touch "$TEST_DIR/test.txt"
+	$SCRIPT delete "$TEST_DIR/test.txt"
+	[ ! -f "$TEST_DIR/test.txt" ] && echo "✓ File removed from original location"
+	$SCRIPT autoclean
+	assert_success "Recycle bin was autocleaned"
+}
 
-#testcase 37 - MIGUEL
-test_stats(){}
+#testcase 37
+test_stats(){
+	echo "=== Testcase 37: Show statistics about the recycle bin ==="
+	setup
+	echo "test content" > "$TEST_DIR/test1.txt"
+	echo "test content" > "$TEST_DIR/test2.txt"
+	echo "test content" > "$TEST_DIR/test3.txt"
+	fallocate -l 1G "$TEST_DIR/large.bin"
+	$SCRIPT delete "$TEST_DIR/test1.txt" "$TEST_DIR/test2.txt" "$TEST_DIR/test3.txt" "$TEST_DIR/large.bin"
+	[ ! -f "$TEST_DIR/test1.txt" ] && echo "✓ test1.txt removed from original location"
+	[ ! -f "$TEST_DIR/test2.txt" ] && echo "✓ test2.txt removed from original location"
+	[ ! -f "$TEST_DIR/test3.txt" ] && echo "✓ test3.txt removed from original location"
+	[ ! -f "$TEST_DIR/large.bin" ] && echo "✓ large.bin removed from original location"
+	$SCRIPT stats
+	assert_success "Statistics have been shown"
+	if $SCRIPT "stats" | grep -q "=== Statistics ==="; then
+    	echo "✓ Stats have been shown"
+	fi
+}
 
-#testcase 38 - MIGUEL
-test_set_password(){}
+#auxiliary function for test_password
+test_password_delete_file(){
+	echo "test content" > "$TEST_DIR/test"
+	$SCRIPT delete "$TEST_DIR/test"
+}
 
-#testcase 39 - MIGUEL
-test_change_password(){}
+#testcase 38-41
+test_password(){
+	setup
+	echo "=== Password Tests ==="
+	echo "=== Testcase 38: Set password ==="
+	test_password_delete_file
+	{ echo Y; echo 1234; } | $SCRIPT secure
+	assert_success "Password has been set"
+	if { echo Y; echo 1234; } | $SCRIPT empty | grep -q "password to continue"; then
+    	echo "✓ Bin emptied, asked for password"
+	fi
 
-#testcase 40 - MIGUEL
-test_unset_password(){}
+	echo "=== Testcase 39: Change password ==="
+	test_password_delete_file
+	{ echo 2; echo 1234; echo 0000; } | $SCRIPT secure
+	assert_success "Password has been changed"
+	if { echo Y; echo 0000; } | $SCRIPT empty | grep -q "password to continue"; then
+    	echo "✓ Bin emptied, asked for password"
+	fi
 
-#testcase 41 - MIGUEL
-test_wrong_password(){}
+	echo "=== Testcase 41: Wrong password error ==="
+	test_password_delete_file
+	{ echo Y; echo 1234; } | $SCRIPT empty
+	assert_fail "Wrong password has been checked"
+
+	echo "=== Testcase 40: Disable password ==="
+	{ echo 1; echo 0000; } | $SCRIPT secure
+	assert_success "Password has been disabled"
+	if { echo Y; } | $SCRIPT empty | grep -q "Recycle Bin emptied"; then
+    	echo "✓ Bin emptied, did not ask for password"
+	fi
+
+}
 
 #testcase 42 - SILVA
-test_preview_txt(){}
+test_preview_txt(){
+	return 0
+}
 
 #testcase 43 - SILVA
-test_preview_binary(){}
+test_preview_binary(){
+	return 0
+}
 
 #testcase 44 - SILVA
-test_quota(){}
+test_quota(){
+	return 0
+}
 
 # Run all tests
 echo "========================================="
@@ -262,9 +462,9 @@ echo " Recycle Bin Test Suite"
 echo "========================================="
 test_initialization
 test_delete_file
-test_delete_files
+test_delete_multiple_files
 test_delete_empty_directory
-test_delete_directory(){}
+test_delete_directory
 test_list_empty
 test_restore_file
 test_restore_to_missing_path
@@ -287,13 +487,14 @@ test_restore_to_readonly_directory
 test_invalid_command
 test_missing_parameters
 test_corrupted_metadata
+test_insufficient_disk_space
+test_permission_denied_errors
+test_delete_recycle_bin_itself
+test_concurrent_operations
 test_performace
 test_autoclean
 test_stats
-test_set_password
-test_change_password
-test_unset_password
-test_wrong_password
+test_password
 test_preview_txt
 test_preview_binary
 test_quota
