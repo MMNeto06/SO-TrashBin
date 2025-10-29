@@ -485,7 +485,7 @@ restore_file() {
 # Function: empty_recyclebin
 # Description: Permanently deletes all items
 # Parameters: Up to 2
-# Returns: 0 on success, exit 1 if cancelled
+# Returns: 0 on success, 1 if cancelled
 #################################################
 empty_recyclebin() {
 	source "$CONFIG_FILE"
@@ -526,6 +526,7 @@ empty_recyclebin() {
 			fi
 		done < "$METADATA_FILE"
 		log error both "${RED}Error: file name or id not found${NC}"
+		return 1;
 	else
 		log info both "The following files will be deleted"
 		list_recycled
@@ -602,7 +603,7 @@ search_recycled() {
 # Function: auto_cleanup (OPTIONAL)
 # Description: Auto clean old files from bin
 # Parameters: None
-# Returns: 0 on success
+# Returns: 0 on success, 1 if canceled
 #################################################
 auto_cleanup(){
 	#at this moment, autoclean runs manually
@@ -614,7 +615,7 @@ auto_cleanup(){
 
 	if [ $RETENTION_DAYS -eq -1 ]; then
 		log info both "Retention days is not configured."
-		return 0
+		exit 1
 	fi
 
 	if [[ $PASSWD_ACTIVE -eq 1 ]]; then
