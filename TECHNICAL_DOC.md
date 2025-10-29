@@ -353,7 +353,7 @@ In case any of the verifications fail, the file should be repaired (using `repai
 
 **For every argument passed:** 
 
-4. Validates input is a file.
+4. Validates input is not empty.
 5. Checks if file exists.
 6. Checks file reading and writing permissions.
 7. Fetches metadata (not from metadata file).
@@ -373,18 +373,61 @@ In case any of the verifications fail, the file should be repaired (using `repai
 ### `list_recycled()` -> MIGUEL
 
 ### `restore_file()`
+1. Validates input is not empty.
+2. Searches by file_name or file-id, by interating through every metadata file line.
+
+**If a match is found:**
+
+3. Verifies if original directory exists.
+    - If not, creates parent directories. Insufficient permissions result on function return with value 1.
+4. Verifies if file exists at original directory.
+    - If so, the user is presented with the following options:
+        - Overwrite file; 
+        - Restore with a modified name (adittional timestamp);
+        - Cancel operation -> Return 1;
+5. Verifies there is enough disk space;
+6. Moves file back to its original directory. Insufficient permissions result on function return with value 1.
+7. Restores original permissions.
+8. Erases file metadata.
+
+**If no match was found:** Function returns with value 1.
 
 ### `empty_recyclebin()` -> MIGUEL
 
 ### `search_recycled()`
+1. Transforms pattern passed as argument into regex (using sed), escaping special characteres in order to support wildcards.
+2. Attemps to find a match on file name or path, by interating through every metadata file line and comparing (using grep).
+
+**If a match is found:**
+
+3. Fecthes important data from metadata file.
+4. If file name or path is too long, truncates them.
+5. Prints file information.
+
+**If no match was found:** Function returns with value 1.
 
 ### `auto_cleanup()` -> MIGUEL
 
 ### `check_quota()`
+1. Obtains MAX_SIZE_MB variable from config file.
+2. Gets recycle bin size in MB.
+3. If recycle bin size is greater or equal to MAX_SIZE_MB, the user is informed that recycle bin is full.
+4. Askes user permissions to clear space.
+    - User agrees, cleares space by calling `auto_cleanup()` function.
+    - Else, returns 1.
+5. Returns 0
 
 ### `show_statistics()` -> MIGUEL
 
 ### `file_preview()`
+**Note:** If any of the verifications fail, function returns 1.
+
+1. Validates input is not empty.
+2. Checks if file exists on recycle bin.
+3. Checks if is a text file.
+    - If so, displays the first ten lines of its content.
+    - Else (binary file), displays file information.
+4. Return 0.
 
 ### `secure_operation()` -> MIGUEL
 
@@ -397,3 +440,7 @@ In case any of the verifications fail, the file should be repaired (using `repai
 
 ### `delete_file()`
 ![Delete File](screenshots/diagrams/delete_file_flowchart.png)
+
+### `restore_file()`
+![Restore File](screenshots/diagrams/restore_file_flowchart.png)
+

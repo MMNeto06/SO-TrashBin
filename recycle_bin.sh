@@ -664,14 +664,7 @@ check_quota(){
 	log info file "check_quota function called."
 	
 	source "$CONFIG_FILE"
-	
-	if [[ $MAX_SIZE_MB -eq -1 ]] 
-	then 
-		log info both "Max_Size is not configured."
-		nano $CONFIG_FILE
-		return 1
-    fi 
-        
+	        
     log info file "MAX_SIZE_MB = $MAX_SIZE_MB"
         
     log info file "Fetching recycle bin size..."
