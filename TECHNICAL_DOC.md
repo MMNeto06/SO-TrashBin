@@ -150,7 +150,25 @@ Moves a file or directory to the recycle bin, updates the metadata, and logs the
 - Handles directories recursively.
 - Logs the operation details to log file and/or user.
 
-### `list_recycled()` -> MIGUEL
+### `list_recycled()`
+**Purpose:**  
+List all items currently in the recycle bin, informing at the end the number of items and the total size of the bin.
+
+**Parameters:**
+- [OPTIONAL] --detailed: Displays all information in metadata for each file during listing.
+
+**Return Value:**  
+- `0` on success
+
+**Notes:**  
+- Reads metadata file.
+- By default, it only displays the following information about each file:
+    - File Id (Truncated) 
+    - Original Name
+    - Delete Date
+    - File Size
+- If more information is wanted, use the --detailed flag, as mentioned
+- This function has a seperate message if the recycle bin is empty
 
 ### `restore_file()`
 **Purpose:**  
@@ -174,7 +192,25 @@ Restores file from recycle bin, updates the metadata, and logs the operation.
     - Cancel operation.
 - Logs the operation details to log file and/or user.
 
-### `empty_recyclebin()` -> MIGUEL
+### `empty_recyclebin()`
+**Purpose:**  
+Empties the recycle bin, deleting all files in it permanently and resets the metadata.
+
+**Parameters:**
+- [OPTIONAL] $1: unique id or name to permanently delete
+- [OPTIONAL] --force: Forces the bin to empty, without requiring user confirmation before hand
+
+**Return Value:**  
+- `0` on success
+- `1` on failure
+
+**Notes:**  
+- Resets metadata, as well as the files directory.
+- Has special messsage in case the recycle bin is empty
+- Uses the password set with secure_operation() if it's enabled
+- Can delete a specific item with the $1 parameter; the parameter is fully optional, without it the whole bin is emptied
+- The --force flag can be used with the $1 paramater, with that paramater coming in first
+    - However, the combination is primarily used by the auto_cleanup function
 
 ### `search_recycled()`
 **Purpose:**  
@@ -191,7 +227,23 @@ Search for files in recycle bin.
 - Supports wildcards, by transforming pattern in regex (using sed). Ex: "*.pdf"
 - Truncates names and paths, if they are too long.
 
-### `auto_cleanup()` -> MIGUEL
+### `auto_cleanup()`
+**Purpose:**  
+Automatically cleans the recycle bin by looking for old files and permanently deleting them.
+
+**Parameters:** None
+
+**Return Value:**  
+- `0` on success
+- `1` on failure
+
+**Notes:**  
+- Updates metadata
+- The maximum retention for the files is configures in the configuration file
+- Uses the empty_recyclebin() function with $1 and --force
+- Uses the password set with secure_operation() if it's enabled
+- In the end it shows how many files were automatically cleaned
+
 
 ### `check_quota()`
 **Purpose:**  
@@ -208,7 +260,17 @@ Check if recycle bin exceeds MAX_SIZE_MB.
 - If recycle bin is full, ask user permission to clear space.
 - If user agrees, calls `auto_cleanup()` to clear space.
 
-### `show_statistics()` -> MIGUEL
+### `show_statistics()`
+**Purpose:**  
+Displays a variety of statistics related to the recycle bin
+
+**Parameters:** None
+
+**Return Value:**  
+- `0` on success
+
+**Notes:**  
+- Reads metadata
 
 ### `file_preview()`
 **Purpose:**  
@@ -224,7 +286,33 @@ Show first 10 lines for text files or file information for binary files.
 **Notes:**  
 - Verifies if file exists on recycle bin.
 
-### `secure_operation()` -> MIGUEL
+### `secure_operation()`
+**Purpose:**  
+Allows the user to set a password for sensitive operations
+
+**Parameters:** None
+
+**Return Value:**
+- `0` on success
+- `1` on failure
+
+**Notes:**  
+- Stores the password value and wether it's active in the configuration file
+- If password is set, empty_recyclebin() and auto_cleanup() will require extra confirmation
+
+### `main()`
+**Purpose:**  
+Main program logic.
+
+**Parameters:** Command line arguments passed by the user.
+
+**Return Value:** Exit code.
+
+**Notes:**  
+- Calls `lock_operation()` to prevent concurrent operations.
+- Calls `initialize_recyclebin()` to ensure recycle bin structure is correct.
+- Parses command line arguments. 
+- Invokes the appropriate function based on user's selected operation.
 
 ### `display_help()`
 **Purpose:**  
@@ -264,7 +352,7 @@ The following files are critical to the correct behavior of the program:
 - config: contains the recycle bin configuration parameters; 
 - recyclebin.log: holds function execution details.
 
-Addicionally, a `files/` directory was used in order to store deleted files.
+Additionally, a `files/` directory was used in order to store deleted files.
 
 ### 3. Locking Mechanism
 **- Context:** 
@@ -370,7 +458,29 @@ In case any of the verifications fail, the file should be repaired (using `repai
 
 15. Returns appropriate exit code.
 
-### `list_recycled()` -> MIGUEL
+### `list_recycled()`
+1. Prints initial header.
+2. Checks if the recycle bin is empty.
+    - If so, program prints that information and ends.
+3. Initializes variables to count number of items and total size.
+4. Checks for --detailed flag.
+
+**For every line in metadata:**
+
+5. Checks for the initial headers, ignoring the initial one.
+    - If it's the second header ("ID,ORIGINAL_NAME,..."), then prints the 'table header';
+        - This header is different depending on the --detailed flag;
+6. Prints every line of metadata in a formatted string.
+    - Amount of information displayed per line depends on the --detailed flag;
+    - Truncates the original name and/or the original path of they are too long;
+    - Converts the file size to a readable format;
+7. Updates the variables initialized in step 3.
+
+**After for cycle is finished:** 
+
+8. Displays the number of items in the bin
+9. Displays the total size of the bin in a readable format
+10. Returns 0 
 
 ### `restore_file()`
 1. Validates input is not empty.
@@ -392,7 +502,22 @@ In case any of the verifications fail, the file should be repaired (using `repai
 
 **If no match was found:** Function returns with value 1.
 
-### `empty_recyclebin()` -> MIGUEL
+### `empty_recyclebin()`
+1. Checks for the --force flag
+2. Checks if the bin is empty
+    -If so, prints messages saying so and returns 0
+3. If the --force flag was not on, asks for confirmation before continuing
+    - If it gets cancelled, exits with code 1
+    - If password is active, then also asks for it
+        - If wrong password is introduced, exits with code 1
+4. Checks if the first paramenter is a file
+    - If so, cycles through the whole metadata looking for the file with the matching id or original name
+        - If it finds it, removes it from the files directory and form metadata, and the function returns 0
+        - If not found, prints error and returns 1
+5. If the file paramater is not given, lists entire bin, logging what will be permanently deleted
+6. Removes and remakes the files directory
+7. Deletes all lines from metadata, starting from the third line
+8. Returns 0
 
 ### `search_recycled()`
 1. Transforms pattern passed as argument into regex (using sed), escaping special characteres in order to support wildcards.
@@ -406,7 +531,30 @@ In case any of the verifications fail, the file should be repaired (using `repai
 
 **If no match was found:** Function returns with value 1.
 
-### `auto_cleanup()` -> MIGUEL
+### `auto_cleanup()`
+1. Sources the configuration file and initializes the count variable
+2. Checks if retention days is configured
+    -If not, prints message and exits with code 1
+3. Checks if password is active
+    -If so, asks for password confirmation
+        -If wrong password is inserted, exits with code 1
+
+**For every line in metadata:**
+
+4. Skips the header lines by checking for them
+5. Gets the deletion date of the file and converts it to an epoch (i.e., converts to seconds)
+6. Gets the cutoff date as an epoch, using the current date and the RETENTION_DAYS variable in the configuration file
+7. Compares both dates
+    -If the cutoff epoch is bigger than the deletion date: 
+        - The user is informed that the file will be permanently deleted
+        - The file is forcibly removed using empty_recyclebin
+        - The count variable is updated
+
+**After for cycle is finished:** 
+
+8. Display how many files have been removed with this function
+    -If none have been removed, a special message is displayed
+9. Returns 0
 
 ### `check_quota()`
 1. Obtains MAX_SIZE_MB variable from config file.
@@ -417,7 +565,28 @@ In case any of the verifications fail, the file should be repaired (using `repai
     - Else, returns 1.
 5. Returns 0
 
-### `show_statistics()` -> MIGUEL
+### `show_statistics()`
+1. Source the configuration file and initialize all local variables used to keep track of the statistics. The variables include:
+    - Total items
+	- Total size
+	- Number of files
+	- Number of directories
+	- Oldest deleted item
+	- Oldest time (associated to oldest deleted item)
+	- Newest deleted file
+	- Newest time (associated to newest deleted item)
+
+**For every line in metadata:**
+
+2. Skips the header lines by checking for them
+3. Updates all the variables accordingly
+
+**After for cycle is finished:** 
+
+4. Converts all file sizes to a readable format
+5. Logs in both the terminal and the log file all the statistics recorded
+    - From the configuration file, the quota is sourced to calculate quota percentage
+
 
 ### `file_preview()`
 **Note:** If any of the verifications fail, function returns 1.
@@ -429,7 +598,34 @@ In case any of the verifications fail, the file should be repaired (using `repai
     - Else (binary file), displays file information.
 4. Return 0.
 
-### `secure_operation()` -> MIGUEL
+### `secure_operation()`
+
+1. Sources configuration file and saves 2 of it's variables to local ones
+2. Checks if password is active
+
+**If password is inactive:**
+
+3. Asks user if they wish to activate it
+    - If so, user introduces new password and updates local variables
+    - If not, returns 0
+
+**If password is active:**
+
+3. Asks user if they with to do anything to it's status
+    - Available options
+    1. Disable password
+        - User can disable password by introducing current one
+            -If wrong password is introduced, exits with code 1
+        - Local variables are updated
+    2. Change password
+        - User can change password after introducing current one
+            -If wrong password is introduced, exits with code 1
+        - Local variables are updates
+    3. Exit
+        -Returns 0
+
+4. Configuration file is updated with the local variables' values
+5. Returns 0
 
 ## Flowcharts for Complex Operations (TODO)
 ### `lock_operation()`
