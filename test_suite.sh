@@ -43,6 +43,7 @@ assert_fail() {
 }
 
 # Test Cases
+#testcase 1
 test_initialization() {
 	echo "=== Test: Initialization ==="
 	setup
@@ -52,6 +53,7 @@ test_initialization() {
 	[ -f ~/.recycle_bin/metadata.db ] && echo "✓ Metadata file created"
 }
 
+#testcase 2
 test_delete_file() {
 	echo "=== Test: Delete File ==="
 	setup
@@ -62,6 +64,16 @@ test_delete_file() {
 	location"
 }
 
+#testcase 3 - MIGUEL mas roubei do silva
+test_delete_files(){} #delete multiple file in one line
+
+#testcase 4 - MIGUEL mas roubei do silva
+test_delete_empty_directory(){}
+
+#testcase 5 - MIGUEL mas roubei do silva
+test_delete_directory(){}
+
+#testcase 6
 test_list_empty() {
 	echo "=== Test: List Empty Bin ==="
 	setup
@@ -69,6 +81,7 @@ test_list_empty() {
 	assert_success "List empty recycle bin"
 }
 
+#testcase 7
 test_restore_file() {
 	echo "=== Test: Restore File ==="
 	setup
@@ -80,6 +93,57 @@ test_restore_file() {
 	assert_success "Restore file"
 	[ -f "$TEST_DIR/restore_test.txt" ] && echo "✓ File restored"
 }
+
+#testcase 8 - MIGUEL mas roubei do silva
+test_restore_to_missing_path(){}
+
+#tescase 9 - MIGUEL
+test_empty_bin(){}
+
+#testcase 10 - MIGUEL mas roubei do silva
+test_search_success(){}
+
+#testcase 11 - MIGUEL mas roubei do silva
+test_search_failure(){}
+
+#testcase 12 - MIGUEL mais roubei do silva
+test_help(){}
+
+#testcase 13 - SILVA
+test_delete_non_existent_file(){}
+
+#testcase 14 - SILVA
+test_delete_file_without_permission(){}
+
+#testcase 15 - SILVA
+test_restore_original_location_has_same_filename(){}
+
+#testcase 16 - SILVA
+test_restore_nonexistent_fileid(){}
+
+#testcase 17 - SILVA
+test_filename_with_spaces(){}
+
+#testcase 18 - SILVA
+test_filename_with_special_characters(){}
+
+#testcase 19 - SILVA
+test_long_filename(){}
+
+#testcase 20 - SILVA
+test_very_large_file(){}
+
+#testcase 21 - SILVA
+test_symbolic_links(){}
+
+#testcase 22 - SILVA
+test_hidden_file(){}
+
+#testcase 23 - SILVA
+test_delete_from_different_directories(){}
+
+#testcase 24 - SILVA
+test_restore_to_readonly_directory(){}
 
 #testcase 25
 test_invalid_command(){
@@ -106,19 +170,28 @@ test_corrupted_metadata(){
 	assert_success "Metadata was repaired after being detected as corrupted"
 }
 
-test_performance_make_files(){
+#testcase 28 - MIGUEL
+test_insufficient_disk_space(){}
+
+#testcase 29 - MIGUEL
+test_permission_denied_errors(){}
+
+#testcase 30 - MIGUEL
+test_delete_recycle_bin_itself(){}
+
+#testcase 31 - SILVA
+test_concurrent_operations(){}
+
+#all performance testcases in one so testcase 32-35
+test_performace(){ 
+	setup
+	echo "=== Performance Test: Delete 100 Files ==="
+	#making the files
 	for i in {1..100}; do
 		touch "$TEST_DIR/file_$i"
 		echo "This is file number $i" >> "$TEST_DIR/file_$i"
 	done
 	echo "All test files for performance created"
-}
-
-#all performance testcases in one
-test_performace(){ #NOTA PARA SILVA: olá, eu fiz este teste numa única função por ser prático. P.S.: vandalismo
-	setup
-	echo "=== Performance Test: Delete 100 Files ==="
-	test_performance_make_files
 	start=$(date +%s.%N)
 	for i in {1..100}; do
 		$SCRIPT "delete" "$TEST_DIR/file_$i"
@@ -156,7 +229,32 @@ test_performace(){ #NOTA PARA SILVA: olá, eu fiz este teste numa única funçã
 	echo "Time to restore file_100: $elapsed_time s"
 }
 
+#testcase 36 - MIGUEL
+test_autoclean(){}
 
+#testcase 37 - MIGUEL
+test_stats(){}
+
+#testcase 38 - MIGUEL
+test_set_password(){}
+
+#testcase 39 - MIGUEL
+test_change_password(){}
+
+#testcase 40 - MIGUEL
+test_unset_password(){}
+
+#testcase 41 - MIGUEL
+test_wrong_password(){}
+
+#testcase 42 - SILVA
+test_preview_txt(){}
+
+#testcase 43 - SILVA
+test_preview_binary(){}
+
+#testcase 44 - SILVA
+test_quota(){}
 
 # Run all tests
 echo "========================================="
@@ -164,15 +262,43 @@ echo " Recycle Bin Test Suite"
 echo "========================================="
 test_initialization
 test_delete_file
+test_delete_files
+test_delete_empty_directory
+test_delete_directory(){}
 test_list_empty
 test_restore_file
-# Add more test functions here
+test_restore_to_missing_path
+test_empty_bin
+test_search_success
+test_search_failure
+test_help
+test_delete_non_existent_file
+test_delete_file_without_permission
+test_restore_original_location_has_same_filename
+test_restore_nonexistent_fileid
+test_filename_with_spaces
+test_filename_with_special_characters
+test_long_filename
+test_very_large_file
+test_symbolic_links
+test_hidden_file
+test_delete_from_different_directories
+test_restore_to_readonly_directory
 test_invalid_command
 test_missing_parameters
 test_corrupted_metadata
 test_performace
+test_autoclean
+test_stats
+test_set_password
+test_change_password
+test_unset_password
+test_wrong_password
+test_preview_txt
+test_preview_binary
+test_quota
 teardown
 echo "========================================="
 echo "Results: $PASS passed, $FAIL failed"
 echo "========================================="
-[ $FAIL -eq 0 ] && exit 0 || exit 1
+[ $FAIL -eq 0 ] && exit 0 || exit 1 #tem que dar 44 passed!
