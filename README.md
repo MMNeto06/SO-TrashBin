@@ -177,6 +177,6 @@ The consulted sources are listed below, duly asscoiated to the development stage
 `repair_metadata_file()`: none
 
 ### Usage of LLMs and other notes
-It's important to note that LLMs were used as a support tool to comprehend concepts, to study functionalities of commands identified during research and any debugging that ocurred during the development.
+It's important to note that LLMs were used as a support tool to comprehend concepts, to study functionalities of commands identified during research and any debugging that ocurred during the development, aswell as helping refine and translate concepts to english.
 
 Part of the presented code was also developed based on the available support materials.
