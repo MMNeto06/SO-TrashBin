@@ -182,6 +182,7 @@ delete_file() {
 		echo "Must indicate at least one file/directory for deletion"
 		echo "Use: $0 delete <file1> <file2> ... <fileN>"
 		exit_code=1
+		return $exit_code
 	fi
 
 	source "$CONFIG_FILE"
@@ -194,16 +195,16 @@ delete_file() {
 		
 		# Validate input
 		if [ -z "$file_path" ]; then
-		log error both "${RED}Error: No file specified${NC}"
-		exit_code=1
-		continue
+			log error both "${RED}Error: No file specified${NC}"
+			exit_code=1
+			continue
 		fi
 		
 		# Check if file exists
 		if [ ! -e "$file_path" ]; then
-		log error both "${RED}Error: File '$file_path' does not exist${NC}"
-		exit_code=1
-		continue
+			log error both "${RED}Error: File '$file_path' does not exist${NC}"
+			exit_code=1
+			continue
 		fi
 
 		# Check file permissions
@@ -217,6 +218,7 @@ delete_file() {
 		local original_file_name=$(basename "$file_path")
 		local original_absolute_path
 
+		# Handle symbolic links
 		if [[ -L "$file_path" ]]
 		then 
 			original_absolute_path=$(realpath -s "$file_path")

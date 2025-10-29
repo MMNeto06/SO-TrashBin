@@ -2,9 +2,39 @@
 ## Authors
 Miguel dos Santos Neto (125200) & Diogo Coelho e Silva (125240) 
 
-## System Architecture diagram (TODO)
+## System Architecture Diagram
+![System Diagram](screenshots/diagrams/system_architecture.png)
 
 ## Data Flow Diagrams (TODO)
+### `initialize_recycle_bin()`
+![Initialize RecycleBin](screenshots/diagrams/initialize_data_flow.png)
+
+### `delete_file()`
+![Delete File](screenshots/diagrams/delete_file_data_flow.png)
+
+### `list_recycled()` -> MIGUEL
+![Delete File](screenshots/diagrams/delete_file_data_flow.png)
+
+### `restore_file()`
+![Restore File](screenshots/diagrams/restore_file_data_flow.png)
+
+### `search_recycled()`
+![Search File](screenshots/diagrams/search_recycled_data_flow.png)
+
+### `empty_recyclebin()` -> MIGUEL
+![Search File](screenshots/diagrams/search_recycled_data_flow.png)
+
+### `show_statistics()` -> MIGUEL
+![Search File](screenshots/diagrams/search_recycled_data_flow.png)
+
+### `auto_cleanup()` -> MIGUEL
+![Search File](screenshots/diagrams/search_recycled_data_flow.png)
+
+### `check_quota()`
+![Check Quota](screenshots/diagrams/check_quota_data_flow.png)
+
+### `preview_file()`
+![Check Quota](screenshots/diagrams/preview_file_data_flow.png)
 
 ## Metadata Schema Explanation 
 ### Purpose of Metadata
@@ -292,5 +322,65 @@ In case any of the verifications fail, the file should be repaired (using `repai
 
 
 ## Algorithm Explanations (TODO)
+### `lock_operation()`
+1. Attemps to create a temporary lock directory (using mkdir, atomic operation).
+2. If creation fails, that means there is an operation on going, so exits with exit code 1.
+3. Else, when running operation is over, deletes the directory (using trap).
+
+### `initialize_recyclebin()`
+1. Verifies if recycle bin directory exists.
+    - If not, creates metadata, log and config files, aswell as `files/` directory.
+    - Else, calls `check_metadata_corruption()` to ensure metadata file integrity.
+2. Concludes initialization by returning 0.
+
+### `check_metadata_corruption()`
+1. Checks if the file exists or is readable.
+    - Failed verification, calls `repair_metadata_file()`. 
+    - Else, returns 0.
+
+### `repair_metadata_file()`
+1. Creates new metadata file.
+2. Verifies if recycle bin is empty. 
+    - If not, empties it by calling `empty_recyclebin() --force` (files data is gone).
+    - Else, returns 0.
+
+### `delete_file()`
+**Note:** Exit code is set to 0, by default. If any of the verifications fail, exit code is set to 1.
+
+1. Assures there is at least one argument.
+2. Obtains variables from config file.
+3. Converts MAX_SIZE_MB to KB, for future comparison.
+
+**For every argument passed:** 
+
+4. Validates input is a file.
+5. Checks if file exists.
+6. Checks file reading and writing permissions.
+7. Fetches metadata (not from metadata file).
+8. Checks if file is a symbolic link.
+    - If it is, the program does not follow it.
+9. Checks if user is trying to delete the main script.
+10. Checks if user is trying to delete recycle bin itself.
+11. Verifies there is enough disk space (through MAX_SIZE_MB transformed variable).
+12. Generates file unique Id, by calling `generate_unique_id()` function.
+13. Moves file do recycle bin files directory.
+14. Adds information to metadata file.
+
+**After for cycle is finished:** 
+
+15. Returns appropriate exit code.
+
+
+### `list_recycled()` -> MIGUEL
+
+
 
 ## Flowcharts for Complex Operations (TODO)
+### `lock_operation()`
+![Lock Operation](screenshots/diagrams/lock_operation_flowchart.png)
+
+### `initialize_recyclebin()`, `check_metadata_corruption()` and `repair_metadata_file()`
+![Initialize Operation](screenshots/diagrams/initialize_operation_flowchart.png)
+
+### `delete_file()`
+![Delete File](screenshots/diagrams/delete_file_flowchart.png)
