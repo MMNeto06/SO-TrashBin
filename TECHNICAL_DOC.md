@@ -370,10 +370,23 @@ In case any of the verifications fail, the file should be repaired (using `repai
 
 15. Returns appropriate exit code.
 
-
 ### `list_recycled()` -> MIGUEL
 
+### `restore_file()`
 
+### `empty_recyclebin()` -> MIGUEL
+
+### `search_recycled()`
+
+### `auto_cleanup()` -> MIGUEL
+
+### `check_quota()`
+
+### `show_statistics()` -> MIGUEL
+
+### `file_preview()`
+
+### `secure_operation()` -> MIGUEL
 
 ## Flowcharts for Complex Operations (TODO)
 ### `lock_operation()`
