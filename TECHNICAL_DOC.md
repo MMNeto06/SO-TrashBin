@@ -5,15 +5,15 @@ Miguel dos Santos Neto (125200) & Diogo Coelho e Silva (125240)
 ## System Architecture Diagram
 ![System Diagram](screenshots/diagrams/system_architecture.png)
 
-## Data Flow Diagrams (TODO)
+## Data Flow Diagrams
 ### `initialize_recycle_bin()`
 ![Initialize RecycleBin](screenshots/diagrams/initialize_data_flow.png)
 
 ### `delete_file()`
 ![Delete File](screenshots/diagrams/delete_file_data_flow.png)
 
-### `list_recycled()` -> MIGUEL
-![Delete File](screenshots/diagrams/delete_file_data_flow.png)
+### `list_recycled()`
+![List Recycled](screenshots/diagrams/list_recycled_data_flow.png)
 
 ### `restore_file()`
 ![Restore File](screenshots/diagrams/restore_file_data_flow.png)
@@ -21,20 +21,23 @@ Miguel dos Santos Neto (125200) & Diogo Coelho e Silva (125240)
 ### `search_recycled()`
 ![Search File](screenshots/diagrams/search_recycled_data_flow.png)
 
-### `empty_recyclebin()` -> MIGUEL
-![Search File](screenshots/diagrams/search_recycled_data_flow.png)
+### `empty_recyclebin()`
+![Empty Bin](screenshots/diagrams/empty_recyclebin_data_flow.png)
 
-### `show_statistics()` -> MIGUEL
-![Search File](screenshots/diagrams/search_recycled_data_flow.png)
+### `show_statistics()`
+![Show Stats](screenshots/diagrams/show_statistics_data_flow.png)
 
-### `auto_cleanup()` -> MIGUEL
-![Search File](screenshots/diagrams/search_recycled_data_flow.png)
+### `auto_cleanup()`
+![Auto Cleanup](screenshots/diagrams/auto_cleanup_data_flow.png)
 
 ### `check_quota()`
 ![Check Quota](screenshots/diagrams/check_quota_data_flow.png)
 
 ### `preview_file()`
-![Check Quota](screenshots/diagrams/preview_file_data_flow.png)
+![Preview File](screenshots/diagrams/preview_file_data_flow.png)
+
+### `secure_operation()`
+![Secure Operation](screenshots/diagrams/secure_operation_data_flow.png)
 
 ## Metadata Schema Explanation 
 ### Purpose of Metadata
@@ -409,7 +412,7 @@ In case any of the verifications fail, the file should be repaired (using `repai
 ### 8. Sensitive Operations -> MIGUEL, tu vais saber explicar melhor que eu
 
 
-## Algorithm Explanations (TODO)
+## Algorithm Explanations
 ### `lock_operation()`
 1. Attemps to create a temporary lock directory (using mkdir, atomic operation).
 2. If creation fails, that means there is an operation on going, so exits with exit code 1.
@@ -503,9 +506,9 @@ In case any of the verifications fail, the file should be repaired (using `repai
 **If no match was found:** Function returns with value 1.
 
 ### `empty_recyclebin()`
-1. Checks for the --force flag
-2. Checks if the bin is empty
+1. Checks if the bin is empty
     -If so, prints messages saying so and returns 0
+2. Checks for the --force flag
 3. If the --force flag was not on, asks for confirmation before continuing
     - If it gets cancelled, exits with code 1
     - If password is active, then also asks for it
@@ -627,7 +630,7 @@ In case any of the verifications fail, the file should be repaired (using `repai
 4. Configuration file is updated with the local variables' values
 5. Returns 0
 
-## Flowcharts for Complex Operations (TODO)
+## Flowcharts for Complex Operations
 ### `lock_operation()`
 ![Lock Operation](screenshots/diagrams/lock_operation_flowchart.png)
 
@@ -639,4 +642,13 @@ In case any of the verifications fail, the file should be repaired (using `repai
 
 ### `restore_file()`
 ![Restore File](screenshots/diagrams/restore_file_flowchart.png)
+
+### `empty_recyclebin()`
+![Restore File](screenshots/diagrams/empty_recyclebin_flowchart.png)
+
+### `auto_cleanup()`
+![Restore File](screenshots/diagrams/auto_cleanup_flowchart.png)
+
+### `secure_operation()`
+![Restore File](screenshots/diagrams/secure_operation_flowchart.png)
 

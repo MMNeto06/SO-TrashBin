@@ -495,13 +495,13 @@ empty_recyclebin() {
 
 	local force=1
 
-	if [[ "$1" == "--force" || "$2" == "--force" ]]; then
-		force=0
-	fi
-
 	if [[ -z $( ls -A "$FILES_DIR" ) ]]; then
 		echo "The Recycle Bin is Currently Empty"
 		return 0
+	fi
+
+	if [[ "$1" == "--force" || "$2" == "--force" ]]; then
+		force=0
 	fi
 	
 	if [ $force -eq 1 ]; then
