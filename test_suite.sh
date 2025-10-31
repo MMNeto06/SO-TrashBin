@@ -214,7 +214,7 @@ test_restore_original_location_has_same_filename_success(){
 	$SCRIPT delete $TEST_DIR/testFile
 	touch "$TEST_DIR/testFile"
 	echo "assert_success when user selects Overwrite or Restore with modified name option"
-	$SCRIPT restore testFile
+	{ echo 1; } | $SCRIPT restore testFile
 	assert_success "Overwrite/Modified name"
 }
 
@@ -224,7 +224,7 @@ test_restore_original_location_has_same_filename_failure(){
 	$SCRIPT delete "$TEST_DIR/testFile"
 	touch "$TEST_DIR/testFile"
 	echo "assert_fail when user selects Cancel operation option" 
-	$SCRIPT restore testFile
+	{ echo 3; } | $SCRIPT restore testFile
 	assert_fail "Cancel Operation"
 }
 
@@ -371,11 +371,16 @@ test_insufficient_disk_space(){
 	setup
 	$SCRIPT list #enough to initialize
 	source $CONFIG
-	fallocate -l 50G "$TEST_DIR/largefile.bin"
+	available_space=$(df --output=avail -BG . | tail -1) #gets available space in GB
+	available_space_mb=$(df --output=avail -BM . | tail -1) #gets available space in MB
+	avail_gb=${available_space%G} #removes the g
+	large_size=$((avail_gb / 2 + avail_gb / 10)) #makes the siz ehalf of the avilable +  a tenth. change this as necessary
+	fallocate -l "${large_size}G" "$TEST_DIR/largefile.bin"
 	$SCRIPT delete "$TEST_DIR/largefile.bin"
 	assert_fail "Large file was not moved as it exceeds quota"
+	avail_mb=${available_space_mb%M} #cuts the M
 	sed -i '5d' $CONFIG
-	sed -i '5i\MAX_SIZE_MB=100000' $CONFIG
+	sed -i "5i\MAX_SIZE_MB=${avail_mb}" $CONFIG #makes the max size mb as the full disk availability
 	$SCRIPT delete "$TEST_DIR/largefile.bin"
 	$SCRIPT list
 	$SCRIPT restore "largefile.bin"
@@ -603,7 +608,7 @@ test_quota(){
 	sed -i '5i\MAX_SIZE_MB=0' $CONFIG
 	sed -i '5i\RETENTION_DAYS=0' $CONFIG
 
-	$SCRIPT quota
+	{ echo Y; } | $SCRIPT quota
 
 	assert_success "Quota check was successful"
 }

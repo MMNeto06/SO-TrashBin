@@ -409,7 +409,16 @@ A dedicated health check function (`check_metadata_corruption()`) was implemente
 This function should verify if the file was not deleted and if it is readable.
 In case any of the verifications fail, the file should be repaired (using `repair_metadata_file()` function).
 
-### 8. Sensitive Operations -> MIGUEL, tu vais saber explicar melhor que eu
+### 8. Sensitive Operations
+**- Context:**
+The user can, at any point, set a password to protect certain sensiteve operations of the program.
+
+**- Rationale:**
+A dedicated function (`secure_operation()`) was implemented for the user to set, change and disable a password for the program.
+
+With a password set, the `empty_recyclebin()` function (without --force flag) and `auto_cleanup()` fucntion will now require the password to continue.
+
+These operation were deamed sensitive since they permanently delete files from the bin.
 
 
 ## Algorithm Explanations
