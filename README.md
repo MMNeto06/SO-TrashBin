@@ -93,6 +93,7 @@ To configure your recycle bin, you should always use the following command: ./re
 ![Delete operation](screenshots/delete_operation.png)
 
 - List operation:
+
 ![List operation](screenshots/list_operation.png)
 
 - Restore operation:
@@ -112,6 +113,7 @@ To configure your recycle bin, you should always use the following command: ./re
 ![Auto clean up](screenshots/auto_clean_up_operation.png)
 
 - Check Quota Operation: 
+
 ![Check quota](screenshots/check_quota_operation.png)
 
 - Show Statistics Operation:
@@ -121,6 +123,7 @@ To configure your recycle bin, you should always use the following command: ./re
 ![File preview](screenshots/file_preview_operation.png)
 
 - Secure Operation:
+
 ![Secure operation](screenshots/secure_operation.png)
 
 - Lock Operation: 
@@ -177,6 +180,6 @@ The consulted sources are listed below, duly asscoiated to the development stage
 `repair_metadata_file()`: none
 
 ### Usage of LLMs and other notes
-It's important to note that LLMs were used as a support tool to comprehend concepts, to study functionalities of commands identified during research and any debugging that ocurred during the development, aswell as helping refine and translate concepts to english.
+It's important to note that LLMs were used as a support tool to comprehend concepts, to study functionalities of commands identified during research and any debugging that occurred during the development, as well as helping refine and translate concepts to english.
 
 Part of the presented code was also developed based on the available support materials.

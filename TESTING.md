@@ -27,9 +27,11 @@ Miguel dos Santos Neto (125200) & Diogo Coelho e Silva (125240)
 
 **Screenshots:** 
 - Success message displayed: 
+
 ![Success message](screenshots/testcase1_initialization_message.png)
 
 - Recycle bin structure: 
+
 ![Recycle bin structure](screenshots/testcase1_recycle_bin_structure.png)
 
 ### Test Case 2: Delete Single File
@@ -62,6 +64,7 @@ Miguel dos Santos Neto (125200) & Diogo Coelho e Silva (125240)
 ![Metadata entry](screenshots/testcase2_metadata_entry.png)
 
 - List output: 
+
 ![List output](screenshots/testcase2_list_output.png)
 
 ### Test Case 3: Delete Multiple Files in One Command
@@ -96,6 +99,7 @@ Miguel dos Santos Neto (125200) & Diogo Coelho e Silva (125240)
 ![Metadata entries](screenshots/testcase3_metadata_entries.png)
 
 - List output: 
+
 ![List output](screenshots/testcase3_list_output.png)
 
 ### Test Case 4: Delete Empty Directory
@@ -245,6 +249,7 @@ The Recycle Bin is Currently Empty
 ![Metadata file entries](screenshots/testcase7_metadata_entries.png)
 
 - List output: 
+
 ![List output](screenshots/testcase7_list_output.png)
 
 ### Test Case 8: Restore to Non-Existent Original Path
@@ -291,6 +296,7 @@ The Recycle Bin is Currently Empty
 ![Metadata file entries](screenshots/testcase8_metadata_entries.png)
 
 - List output: 
+
 ![List output](screenshots/testcase8_list_output.png)
 
 - Original path created: 
@@ -388,6 +394,7 @@ The Recycle Bin is Currently Empty
 
 **Screenshots:** 
 - Help message: 
+
 ![Help message](screenshots/testcase12_help_message.png)
 
 ## Edge Cases 
@@ -440,6 +447,7 @@ The Recycle Bin is Currently Empty
 ![Test image](screenshots/testcase14_test_image.png)
 
 - List output: 
+
 ![List output](screenshots/testcase14_list_output.png)
 
 ### Test Case 15: Restore when Original Location has same Filename
@@ -537,7 +545,7 @@ The Recycle Bin is Currently Empty
 
 **Screenshots:** 
 - Error message: 
-![Error message](screenshots/testcase15_error_message.png)
+![Error message](screenshots/testcase16_error_message.png)
 
 ### Test Case 17: Handle Filenames with Spaces 
 **Objective:** Verify that the script correctly handles file operations (delete, list, restore) when filenames contain spaces.
@@ -823,11 +831,15 @@ The Recycle Bin is Currently Empty
 
 **Screenshots:** 
 - Deletion: 
+
 ![Deletion](screenshots/testcase22_deletion.png)
+
 ![Deletion metadata](screenshots/testcase22_deletion_metadata.png)
 
 - Restore:
+
 ![Restore](screenshots/testcase22_restore.png)
+
 ![Restore metadata](screenshots/testcase22_restore_metadata.png) 
 
 ### Test Case 23: Delete Files from Different Directories
@@ -878,10 +890,13 @@ The Recycle Bin is Currently Empty
 ![Deletion metadata](screenshots/testcase23_deletion_metadata.png)
 
 - Restore:
+
 ![Restore](screenshots/testcase23_restore.png)
+
 ![Restore metadata](screenshots/testcase23_restore_metadata.png) 
 
 - Files back at original path: 
+
 ![Original path](screenshots/testcase23_original_path.png)
 
 ### Test Case 24: Restore Files to Read-Only Directories 

@@ -339,7 +339,7 @@ Main program logic.
 - Parses command line arguments. 
 - Invokes the appropriate function based on user's selected operation.
 
-## Design Decisions and Rationale (TODO)
+## Design Decisions and Rationale
 ### 1. Language and Environment
 **- Context:** The project specification required the implementation to be written in Bash. 
 

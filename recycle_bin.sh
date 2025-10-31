@@ -3,7 +3,7 @@
 #######################################################
 # Linux Recycle Bin Simulation
 # Authors: Diogo Silva (125240) & Miguel Neto (125200)
-# Date: [Date]
+# Date: 31-10-2025 (Final version)
 # Description: Shell-based recycle bin system
 #######################################################
 

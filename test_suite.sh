@@ -1,4 +1,5 @@
 #!/bin/bash
+# Authors: Diogo Silva (125240) & Miguel Neto (125200)
 
 # Test Suite for Recycle Bin System
 SCRIPT="./recycle_bin.sh"
